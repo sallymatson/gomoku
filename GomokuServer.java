@@ -108,9 +108,65 @@ class clientThread extends Thread {
             while (true) {
                 String line = inputStream.readLine();
                 System.out.println("message from client: " + line);
-                if (GomokuProtocol.isGiveupMessage(line)) {
-                    // user exits the program
-                    outputStream.println(GomokuProtocol.generateLoseMessage());
+
+
+                if (GomokuProtocol.isChatMessage(line)){
+
+                }
+                else if (GomokuProtocol.isChangeNameMessage(line)){
+
+                }
+                else if (GomokuProtocol.isPlayMessage(line)){
+
+                }
+                else if (GomokuProtocol.isResetMessage(line)){
+                    
+                }
+
+                // user has performed a command:
+                if (line.startsWith("C=")){
+                    if (line.startsWith("/q", 2)){
+                        // QUIT THE PROGRAM
+                        break;
+                    }
+                    else if (line.startsWith("/nick", 2)){
+                        // CHANGE NICKNAME
+                        String newName = line.substring(8);
+                        if (!nameIsUnique(newName)) {
+                            outputStream.println("M=This username has already been taken.");
+                        } else if (newName.contains("=")) {
+                            outputStream.println("M=Please choose a username without a = character.");
+                        } else {
+                            for (int i = 0; i < maxConnections; i++) {
+                                if (clientConns[i] != null) {
+                                    clientConns[i].outputStream.println("M="+ this.getName()
+                                            + " has changed name to " + newName);
+                                    if (clientConns[i] != this){
+                                        clientConns[i].outputStream.println("C=add=" + newName);
+                                        clientConns[i].outputStream.println("C=remove=" + this.getName());
+                                    }
+                                }
+                            }
+                            this.setName(newName);
+                        }
+                    }
+                }
+
+                // user has started a private message:
+                else if (line.startsWith("P=")){
+                    line = line.substring(2);
+                    String recipient = line.split("=")[0];
+                    String message = line.split("=")[1];
+                    outputStream.println("Private msg to " + recipient + ": " + message);
+                    for (int i = 0; i<maxConnections; i++){
+                        if (clientConns[i] != null && clientConns[i].getName().equals(recipient)){
+                            clientConns[i].outputStream.println("M=" + "Private msg from " + this.getName() + ": " + message);
+                        }
+                    }
+                }
+
+                // user has send a message to everyone:
+                else if (line.startsWith("M=")){
                     for (int i = 0; i < maxConnections; i++) {
                         if (clientConns[i] != null && clientConns[i] != this) {
                             clientConns[i].outputStream.println(GomokuProtocol.generateWinMessage());
