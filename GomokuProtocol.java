@@ -6,7 +6,7 @@ public class GomokuProtocol {
     private static final String MESSAGE_PLAY = SEPARATOR + "/play";
     private static final String MESSAGE_SET_BLACK = SEPARATOR + "/black";
     private static final String MESSAGE_SET_WHITE = SEPARATOR + "/white";
-    private static final String MESSAGE_WIN = SEPARATOR + "/win";
+    private static final String MESSAGE_WIN= SEPARATOR + "/win";
     private static final String MESSAGE_LOSE = SEPARATOR + "/lose";
     private static final String MESSAGE_RESET = SEPARATOR + "/reset";
     private static final String MESSAGE_GIVEUP = SEPARATOR + "/giveup";
