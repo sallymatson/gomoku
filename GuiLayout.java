@@ -14,9 +14,13 @@ import javax.swing.border.LineBorder;
 class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseListener {
 
     private GomokuClient client;
+    private JPanel panelControl;
     private JPanel panelGomoku;
     private JPanel panelChat;
     private ArrayList<JButton> buttonList = new ArrayList<JButton>();
+    private JButton buttonGiveUp;
+
+    private final int boardWidth = 15;
 
     public GuiLayout(GomokuClient client) {
 
@@ -24,6 +28,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         getContentPane().setLayout(new BorderLayout());
 
         setTitle("Gomoku");
+        setupPanelControl();
         setUpPanelGomoku();
         setUpPanelChat();
 
@@ -33,9 +38,17 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         this.client = client;
     }
 
+    private void setupPanelControl() {
+        panelControl = new JPanel();
+        add(panelControl, BorderLayout.LINE_START);
+        buttonGiveUp = new JButton("Give Up");
+        buttonGiveUp.addMouseListener(this);
+        panelControl.add(buttonGiveUp);
+    }
+
     private void setUpPanelGomoku() {
         panelGomoku = new JPanel();
-        add(panelGomoku, BorderLayout.LINE_END);
+        add(panelGomoku, BorderLayout.CENTER);
         panelGomoku.setLayout( new GridLayout( 15, 15, 0, 0) );
         for (int i = 0; i < 15*15; i++) {
             JButton button = new JButton(Integer.toString(i));
@@ -53,16 +66,19 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     private void setUpPanelChat() {
         panelChat = new JPanel();
-        add(panelChat, BorderLayout.CENTER);
+        add(panelChat, BorderLayout.LINE_END);
     }
 
     // MouseListener methods
     public void mouseClicked(MouseEvent MouseEvent) {
         JButton button = (JButton)(MouseEvent.getSource());
-        client.placeGamePiece(button.getText());
-        // notify client
-        // client.placeGamePiece(row, col); - get row, col from MouseEvent.getSource() ?
-        // or from mouseX mouseY
+        if (button == buttonGiveUp) {
+            client.quit();
+        } else if (buttonList.contains(button)) {
+            client.placeGamePiece(button.getText());
+            // client.placeGamePiece(row, col);
+            // get row, col from MouseEvent.getSource(), or maybe from mouse position?
+        }
     }
     public void mouseEntered(MouseEvent MouseEvent) {}
     public void mouseExited(MouseEvent MouseEvent) {}
