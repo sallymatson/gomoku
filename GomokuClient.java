@@ -29,6 +29,7 @@ public class GomokuClient implements Runnable {
     private static boolean closed = false;
     private static GuiLayout layout;
     private static boolean hasName = false;
+    private String name = "My Name";
 
     public void setupConnection(String host, int portNumber) {
         layout = new GuiLayout(this);
@@ -70,6 +71,11 @@ public class GomokuClient implements Runnable {
     public void placeGamePiece(String text) {
         System.out.println("message to server: " + text);
         outputStream.println(text);
+    }
+
+    public void sendMessage(String text) {
+        // TODO: only allow these methods to execute if connected
+        outputStream.println(GomokuProtocol.generateChatMessage(this.name, text));
     }
 
     public void quit() {

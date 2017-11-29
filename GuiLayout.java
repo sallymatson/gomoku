@@ -17,30 +17,45 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private JPanel panelControl;
     private JPanel panelGomoku;
     private JPanel panelChat;
-    private ArrayList<JButton> buttonList = new ArrayList<JButton>();
+
+    // panelControl components
+    private JButton buttonJoinGame;
     private JButton buttonGiveUp;
+
+    // panelGomoku components
+    private ArrayList<JButton> buttonList = new ArrayList<JButton>();
+
+    // panelChat components
+    private TextArea chatArea;
+    private TextArea typeArea;
+    private JButton sendButton;
 
     private final int boardWidth = 15;
 
     public GuiLayout(GomokuClient client) {
-
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new BorderLayout());
 
-        setTitle("Gomoku");
-        setupPanelControl();
+        setUpPanelControl();
         setUpPanelGomoku();
         setUpPanelChat();
 
+        setTitle("Gomoku");
         setSize(new Dimension(640, 480));
         setVisible(true);
 
         this.client = client;
     }
 
-    private void setupPanelControl() {
+    private void setUpPanelControl() {
         panelControl = new JPanel();
         add(panelControl, BorderLayout.LINE_START);
+        panelControl.setLayout(new BoxLayout(panelControl, BoxLayout.Y_AXIS));
+
+        buttonJoinGame = new JButton("Join Game");
+        buttonJoinGame.addMouseListener(this);
+        panelControl.add(buttonJoinGame);
+
         buttonGiveUp = new JButton("Give Up");
         buttonGiveUp.addMouseListener(this);
         panelControl.add(buttonGiveUp);
@@ -64,9 +79,47 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         }
     }
 
+
     private void setUpPanelChat() {
         panelChat = new JPanel();
         add(panelChat, BorderLayout.LINE_END);
+        panelChat.setLayout(new GridBagLayout());
+        panelChat.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.insets = new Insets(2, 2, 2, 2);
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.weightx = 1;
+
+        // add chat area
+        chatArea = new TextArea("", 1, 1, TextArea.SCROLLBARS_VERTICAL_ONLY);
+        chatArea.setEditable(false);
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.gridwidth = 2;
+        constraints.weighty = 0.9;
+        panelChat.add(chatArea, constraints);
+
+        // add text area
+        typeArea = new TextArea("", 1, 1, TextArea.SCROLLBARS_VERTICAL_ONLY);
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.gridwidth = 1;
+        constraints.weightx = 0.9;
+        constraints.weighty = 0.1;
+        panelChat.add(typeArea, constraints);
+        typeArea.addKeyListener(this);
+
+        // add send button
+        sendButton = new JButton("Send");
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridx = 1;
+        constraints.gridy = 1;
+        constraints.gridwidth = 1;
+        constraints.weightx = 0.1;
+        constraints.weighty = 0.1;
+        panelChat.add(sendButton, constraints);
+        sendButton.addActionListener(this);
     }
 
     // MouseListener methods
@@ -87,12 +140,30 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     // KeyListener methods
     public void keyPressed(KeyEvent keyEvent) {
-        // notify client
-        // client.sendMessage(text in box);
+        if(keyEvent.getSource() == typeArea) {
+            if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER)  {
+                send(typeArea.getText());
+                // prevent enter from typing in the box
+                keyEvent.consume();
+            }
+        }
     }
     public void keyReleased(KeyEvent keyEvent) {}
     public void keyTyped(KeyEvent keyEvent) {}
 
     // ActionListener methods
-    public void actionPerformed(ActionEvent actionEvent) {}
+    public void actionPerformed(ActionEvent actionEvent) {
+        if (actionEvent.getSource() == sendButton) {
+            send(typeArea.getText());
+        }
+    }
+
+    private void send(String text) {
+        if (!text.isEmpty()) {
+            // send the chat message to client to handle
+            client.sendMessage(text);
+            // clear text
+            typeArea.setText("");
+        }
+    }
 }
