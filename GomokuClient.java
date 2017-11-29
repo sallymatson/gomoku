@@ -146,7 +146,8 @@ public class GomokuClient implements Runnable {
                     }
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
-                    // send to gui or AI
+                    System.out.println("A player has quit the game.");
+                    closeConnection();
                 }
                 else if (GomokuProtocol.isLoseMessage(responseLine)){
                     System.out.println("Sorry, you lost :(");

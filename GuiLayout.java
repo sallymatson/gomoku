@@ -75,8 +75,11 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         if (button == buttonGiveUp) {
             client.quit();
         } else if (buttonList.contains(button)) {
-            client.placeGamePiece(button.getText());
-            // client.placeGamePiece(row, col);
+            //client.placeGamePiece(button.getText());
+            // dummy data
+            int row = 0;
+            int col = 0;
+            client.placeGamePiece(row, col);
             // get row, col from MouseEvent.getSource(), or maybe from mouse position?
         }
     }
