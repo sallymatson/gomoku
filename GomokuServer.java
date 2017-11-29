@@ -72,6 +72,7 @@ class clientThread extends Thread {
     private int maxConnections;
     private boolean hasName = false;
     private int playerNumber = 0;
+    private boolean gameStarted = false;
 
     public int gameboard[][] = new int[15][15];
 
@@ -117,22 +118,22 @@ class clientThread extends Thread {
             // TODO: adapt this for more than 2 players
             this.setName("Player" + playerNumber);
             outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player " + playerNumber));
-            boolean gameStarted = false;
+            // if the player is an even number, set up a game:
             while (!gameStarted) {
-                // if it is the second player to enter the game room:
-                if (playerNumber == 2) {
+                if (playerNumber % 2 == 0) {
                     // sets the other players names:
-                    clientConns[0].outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
-                    clientConns[1].outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
+                    clientConns[playerNumber - 1].outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player " + playerNumber));
+                    clientConns[playerNumber - 2].outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player " + (playerNumber - 1)));
                     int random = (int) (Math.random() * 2);
                     if (random == 0) {
-                        clientConns[0].outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
-                        clientConns[1].outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
+                        clientConns[playerNumber - 1].outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
+                        clientConns[playerNumber - 2].outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
                     } else {
-                        clientConns[1].outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
-                        clientConns[0].outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
+                        clientConns[playerNumber - 2].outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
+                        clientConns[playerNumber - 1].outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
                     }
-                gameStarted = true;
+                    clientConns[playerNumber-2].gameStarted = true;
+                    gameStarted = true;
                 }
             }
 
@@ -149,7 +150,14 @@ class clientThread extends Thread {
                     }
                 }
                 else if (GomokuProtocol.isChangeNameMessage(line)){
-
+                    String[] detail = GomokuProtocol.getChangeNameDetail(line);
+                    if (nameIsUnique(detail[1])){
+                        for (int i = 0; i<maxConnections; i++){
+                            if (clientConns[i] != null){
+                                clientConns[i].outputStream.println(line);
+                            }
+                        }
+                    }
                 }
 
                 else if (GomokuProtocol.isPlayMessage(line)){
