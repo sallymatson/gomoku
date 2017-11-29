@@ -114,20 +114,25 @@ public class GomokuClient implements Runnable {
                 System.out.println("Message from server: " + responseLine);
 
                 if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
+                    System.out.println("You have been randomly assigned black.");
                     isBlack = true;
                 }
                 else if (GomokuProtocol.isSetWhiteColorMessage(responseLine)){
+                    System.out.println("You have been randomly assigned white.");
                     isBlack = false;
                 }
                 else if (GomokuProtocol.isChangeNameMessage(responseLine)){
                     String[] detail = GomokuProtocol.getChangeNameDetail(responseLine);
-                    // on start, they both have the same name ""
-                    // the server sends a change name message, which will get caught in the first if
+                    // on start, they both have the same name, which is ""
+                    // the server sends a change name message, which gives a default name
+                    // this will be caught by the first if statement, so it will change the player's own name
+                    // once there are two players, it then sends the change name messages to the other 2
                     if (detail[0].equals(name)){
                         name = detail[1];
                     } else if (detail[0].equals(opponent_name)){
                         opponent_name = detail[1];
                     }
+                    // TODO: alert players of the name change
                 }
                 else if (GomokuProtocol.isChatMessage(responseLine)){
                     String[] detail = GomokuProtocol.getChatDetail(responseLine);
