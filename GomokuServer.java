@@ -21,6 +21,8 @@ public class GomokuServer {
     // maximum number of connected users
     private static final int maxConnections = 20;
     private static final clientThread[] clientConns = new clientThread[maxConnections];
+    private static final gomokuGame[] currentGames = new gomokuGame[maxConnections/2];
+    private static final clientThread[] waitingClient = new clientThread[1];
 
     public static void main(String args[]) {
 
@@ -57,6 +59,20 @@ public class GomokuServer {
                     outputStream.close();
                     conn.close();
                 }
+                else if (waitingClient[0] != null){
+                    System.out.println("There are now two players");
+                    for (int j = 0; j<maxConnections/2; j++){
+                        if (currentGames[j] == null){
+                            currentGames[j] = new gomokuGame(waitingClient[0], clientConns[i]);
+                            waitingClient[0] = null;
+                            break;
+                        }
+                    }
+                }
+                else {
+                    System.out.println("waiting for another player");
+                    waitingClient[0] = clientConns[i];
+                }
             } catch (IOException e) {
                 System.err.println("IOException:  " + e);
             }
@@ -64,20 +80,36 @@ public class GomokuServer {
     }
 }
 
-class clientThread extends Thread {
-    private BufferedReader inputStream = null;
-    private PrintStream outputStream = null;
-    private Socket clientSocket = null;
-    private final clientThread[] clientConns;
-    private int maxConnections;
-    private boolean hasName = false;
-    private int playerNumber = 0;
-    private boolean gameStarted = false;
-
+class gomokuGame {
+    public boolean full = false;
+    public clientThread p1;
+    public clientThread p2;
     public int gameboard[][] = new int[15][15];
 
+    gomokuGame() {
+        // dummy constructor
+    }
+
+    gomokuGame(clientThread p1arg, clientThread p2arg){
+        this.p1 = p1arg;
+        this.p2 = p2arg;
+        System.out.println("IN constructor.");
+        System.out.println(p1arg);
+        System.out.println(p2arg);
+        p1.myGame = this;
+        p2.myGame = this;
+        p1.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
+        p2.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
+        p1.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
+        p2.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
+        p1.setName("Player 1");
+        p2.setName("Player 2");
+        p1.opponent = p2;
+        p2.opponent = p1;
+    }
+
     // TODO: make this
-    public static int checkWinState(){
+    public int checkWinState(){
         // if black wins,
         //return 2;
         // if white wins,
@@ -85,6 +117,18 @@ class clientThread extends Thread {
         // if nobody wins,
         return 0;
     }
+}
+
+class clientThread extends Thread {
+    private BufferedReader inputStream = null;
+    public PrintStream outputStream = null;
+    private Socket clientSocket = null;
+    private final clientThread[] clientConns;
+    private int maxConnections;
+    private int playerNumber = 0;
+    public boolean gameStarted = false;
+    public gomokuGame myGame;
+    public clientThread opponent;
 
 
     public clientThread(Socket clientSocket, clientThread[] clientConns) {
@@ -110,12 +154,22 @@ class clientThread extends Thread {
             // open for one client, adds them to the list and informs everyone
             inputStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             outputStream = new PrintStream(clientSocket.getOutputStream());
-            for (int i = 0; i<maxConnections; i++){
-                if (clientConns[i] == this){
-                    playerNumber = i+1;
-                }
+
+            while (!gameStarted){
+                continue;
             }
-            // TODO: adapt this for more than 2 players
+
+
+            System.out.println("Game has started.");
+            // game starts:
+            // set self name
+            // set opponent name
+            // set white/black
+
+
+
+
+            /*
             this.setName("Player" + playerNumber);
             outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player " + playerNumber));
             // if the player is an even number, set up a game:
@@ -135,7 +189,7 @@ class clientThread extends Thread {
                     clientConns[playerNumber-2].gameStarted = true;
                     gameStarted = true;
                 }
-            }
+            }*/
 
             while (true) {
                 String line = inputStream.readLine();
@@ -163,8 +217,8 @@ class clientThread extends Thread {
                 else if (GomokuProtocol.isPlayMessage(line)){
                     int detail[] = GomokuProtocol.getPlayDetail(line);
                     // black = 2, white = 1, empty = 0
-                    gameboard[detail[1]][detail[2]] = detail[0] + 1;
-                    int winState = checkWinState();
+                    myGame.gameboard[detail[1]][detail[2]] = detail[0] + 1;
+                    int winState = myGame.checkWinState();
                     if (winState == 0){
                        // game continues with the new play
                        for (int i = 0; i<maxConnections; i++){
