@@ -29,14 +29,21 @@ public class GomokuClient implements Runnable {
     private static boolean closed = false;
     private static GuiLayout layout;
     private static boolean hasName = false;
-    private String name = "My Name";
-    private boolean isBlack = false;
+    private String name = "";
+    private String opponent_name = "";
+    private boolean isBlack;
+
+    public Color getColor() {
+        return (isBlack ? Color.BLACK : Color.WHITE);
+    }
 
     public void setupConnection(String host, int portNumber) {
         layout = new GuiLayout(this);
 
         // int portNumber = 5155;
         // String host = "localhost";
+
+        // Open a socket on a given host and port. Open input and output streams.
 
         try {
             // open socket on the host and port,
@@ -69,22 +76,32 @@ public class GomokuClient implements Runnable {
         }
     }
 
-    public void placeGamePiece(int col, int row) {
+    /**********************************************************************/
+    /* These Functions handle all 4 player use cases */
+    public void placeGamePiece(int row, int col) {
         outputStream.println(GomokuProtocol.generatePlayMessage(isBlack, row, col));
     }
 
-    public void sendMessage(String text) {
-        // TODO: only allow these methods to execute if connected
-        outputStream.println(GomokuProtocol.generateChatMessage(this.name, text));
+    // this will handle all messages coming from the chat box, including name changes
+    public void sendChat(String text) {
+        if (text.startsWith("/nick")){
+            outputStream.println(GomokuProtocol.generateChangeNameMessage(name, text.substring(6)));
+        }
+        else {
+            outputStream.println(GomokuProtocol.generateChatMessage(name, text));
+        }
     }
 
+    // TODO: make a give up button that calls this funciton when clicked
     public void quit() {
         outputStream.println(GomokuProtocol.generateGiveupMessage());
     }
 
-    public Color getColor() {
-        return Color.BLACK;
+    // TODO: make a reset button
+    public void resetGame(){
+        outputStream.println(GomokuProtocol.generateResetMessage());
     }
+    /**************************************************************************/
 
     public void run() {
         /*
@@ -95,16 +112,62 @@ public class GomokuClient implements Runnable {
         try {
             // gets information from the server:
             while ((responseLine = inputStream.readLine()) != null) {
-                if (GomokuProtocol.isWinMessage(responseLine)) {
-                    System.out.println("Congrats, you won!");
+
+                System.out.println("Message from server: " + responseLine);
+
+                if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
+                    System.out.println("You have been randomly assigned black.");
+                    isBlack = true;
+                }
+                else if (GomokuProtocol.isSetWhiteColorMessage(responseLine)){
+                    System.out.println("You have been randomly assigned white.");
+                    isBlack = false;
+                }
+                else if (GomokuProtocol.isChangeNameMessage(responseLine)){
+                    String[] detail = GomokuProtocol.getChangeNameDetail(responseLine);
+                    // on start, they both have the same name, which is ""
+                    // the server sends a change name message, which gives a default name
+                    // this will be caught by the first if statement, so it will change the player's own name
+                    // once there are two players, it then sends the change name messages to the other 2
+                    if (detail[0].equals(name)){
+                        name = detail[1];
+                    } else if (detail[0].equals(opponent_name)){
+                        opponent_name = detail[1];
+                    }
+                    System.out.println("Name: " + name);
+                    System.out.println("Opponent Name: " + opponent_name);
+                    // TODO: alert players of the name change
+                }
+                else if (GomokuProtocol.isChatMessage(responseLine)){
+                    String[] detail = GomokuProtocol.getChatDetail(responseLine);
+                    String sender = detail[0];
+                    String msg = detail[1];
+                    // TODO: send this to gui however that's going to happen
+                }
+                else if (GomokuProtocol.isPlayMessage(responseLine)){
+                    int[] detail = GomokuProtocol.getPlayDetail(responseLine);
+                    if (detail[0] == 1 && isBlack || detail[0] == 0 && !isBlack){
+                        // this player's move is coming back. Probably don't need to do anything?
+                    } else {
+                        int row = detail[1];
+                        int col = detail[2];
+                        // send message to gameboard that the opponent has played
+                    }
+                }
+                else if (GomokuProtocol.isGiveupMessage(responseLine)){
+                    System.out.println("A player has quit the game.");
                     closeConnection();
                 }
-                else if (GomokuProtocol.isLoseMessage(responseLine)) {
+                else if (GomokuProtocol.isLoseMessage(responseLine)){
                     System.out.println("Sorry, you lost :(");
                     closeConnection();
                 }
-                else {
-                    System.out.println("Nonstandard message from server: " + responseLine);
+                else if (GomokuProtocol.isWinMessage(responseLine)){
+                    System.out.println("Congrats, you won!");
+                    closeConnection();
+                }
+                else if (GomokuProtocol.isResetMessage(responseLine)){
+                    // send to gui or AI
                 }
             }
         } catch (IOException e) {

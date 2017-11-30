@@ -21,6 +21,8 @@ public class GomokuServer {
     // maximum number of connected users
     private static final int maxConnections = 20;
     private static final clientThread[] clientConns = new clientThread[maxConnections];
+    private static final gomokuGame[] currentGames = new gomokuGame[maxConnections/2];
+    private static final clientThread[] waitingClient = new clientThread[1];
 
     public static void main(String args[]) {
 
@@ -45,17 +47,33 @@ public class GomokuServer {
                 System.out.println("Listening for connections...");
                 Socket conn = serverSocket.accept();
                 int i = 0;
+                // create player's thread, add to the server's list of client connections
                 for (i = 0; i < maxConnections; i++) {
                     if (clientConns[i] == null) {
                         (clientConns[i] = new clientThread(conn, clientConns)).start();
                         break;
                     }
                 }
+                // if there is not enough space left:
                 if (i == maxConnections) {
                     PrintStream outputStream = new PrintStream(conn.getOutputStream());
                     outputStream.println("At capacity, please try again later");
                     outputStream.close();
                     conn.close();
+                }
+                // if there is a waiting client, start a new game
+                else if (waitingClient[0] != null){
+                    for (int j = 0; j<maxConnections/2; j++){
+                        if (currentGames[j] == null){
+                            currentGames[j] = new gomokuGame(waitingClient[0], clientConns[i]);
+                            waitingClient[0] = null;
+                            break;
+                        }
+                    }
+                }
+                // if there is no waiting client, add the current client to the list of waiting clients
+                else {
+                    waitingClient[0] = clientConns[i];
                 }
             } catch (IOException e) {
                 System.err.println("IOException:  " + e);
@@ -64,13 +82,72 @@ public class GomokuServer {
     }
 }
 
+class gomokuGame {
+    public clientThread p1;
+    public clientThread p2;
+    public int gameboard[][] = new int[15][15];
+
+    gomokuGame(clientThread p1arg, clientThread p2arg){
+
+        // assign player threads to the game:
+        this.p1 = p1arg;
+        this.p2 = p2arg;
+
+        // set both player's game to be this game
+        p1.myGame = this;
+        p2.myGame = this;
+
+        while (!p1.gameStarted || !p2.gameStarted){
+            continue;
+        }
+        // set the names for both players
+        p1.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
+        p2.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
+        p1.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
+        p2.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
+        p1.setName("Player 1");
+        p2.setName("Player 2");
+
+        // set them to be eachothers opponents
+        p1.opponent = p2;
+        p2.opponent = p1;
+
+        // randomly assign one black and one white
+        int random = (int) (Math.random() * 2);
+        if (random == 0) {
+            p1.outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
+            p2.outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
+            p1.colorNum = 2;
+        } else {
+            p2.outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
+            p1.outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
+            p2.colorNum = 2;
+        }
+
+    }
+
+    // TODO: make this
+    public int checkWinState(){
+        // if black wins,
+        //return 2;
+        // if white wins,
+        //return 1;
+        // if nobody wins,
+        return 0;
+    }
+}
+
 class clientThread extends Thread {
     private BufferedReader inputStream = null;
-    private PrintStream outputStream = null;
+    public PrintStream outputStream = null;
     private Socket clientSocket = null;
     private final clientThread[] clientConns;
     private int maxConnections;
-    private boolean hasName = false;
+    public int colorNum = 1; // 2 for black, 1 for white
+    public gomokuGame myGame;
+    public clientThread opponent;
+    public boolean gameStarted = false;
+
 
     public clientThread(Socket clientSocket, clientThread[] clientConns) {
         this.clientSocket = clientSocket;
@@ -95,89 +172,75 @@ class clientThread extends Thread {
             // open for one client, adds them to the list and informs everyone
             inputStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             outputStream = new PrintStream(clientSocket.getOutputStream());
-            for (int i = 0; i<maxConnections; i++){
-                if (clientConns[i] != null && clientConns[i] != this){
-                    if (clientConns[i].hasName){
-                        outputStream.println("C=add=" + clientConns[i].getName());
-                    }
-                }
+            gameStarted = true;
+
+            while (myGame == null){
+                continue;
             }
-            outputStream.println("Please enter your name.");
+
+
+            System.out.println("Game has started.");
 
 
             while (true) {
                 String line = inputStream.readLine();
                 System.out.println("message from client: " + line);
-                if (GomokuProtocol.isGiveupMessage(line)) {
-                    // user exits the program
-                    outputStream.println(GomokuProtocol.generateLoseMessage());
-                    for (int i = 0; i < maxConnections; i++) {
-                        if (clientConns[i] != null && clientConns[i] != this) {
-                            clientConns[i].outputStream.println(GomokuProtocol.generateWinMessage());
+
+
+                if (GomokuProtocol.isChatMessage(line)){
+                    outputStream.println(line);
+                    opponent.outputStream.println(line);
+                }
+                else if (GomokuProtocol.isChangeNameMessage(line)){
+                    String[] detail = GomokuProtocol.getChangeNameDetail(line);
+                    if (!detail[1].equals(opponent.getName())){
+                        this.setName(detail[1]);
+                        outputStream.println(line);
+                        opponent.outputStream.println(line);
+                    }
+                }
+
+                else if (GomokuProtocol.isPlayMessage(line)){
+                    int detail[] = GomokuProtocol.getPlayDetail(line);
+                    // black = 2, white = 1, empty = 0
+                    myGame.gameboard[detail[1]][detail[2]] = colorNum;
+                    int winState = myGame.checkWinState();
+                    if (winState == 0){
+                       // game continues with the new play
+                       outputStream.println(line);
+                       opponent.outputStream.println(line);
+                    }
+                    else if (winState == 1 && detail[0] == 0 || winState == 2 && detail[0] == 1){
+                        // the player who JUST played (and thus sent the gameplay message) has WON
+                        outputStream.println(GomokuProtocol.generateWinMessage());
+                        opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
+                    }
+                    else {
+                        // the player who JUST played (and thus sent the gameplay message) has LOST
+                        outputStream.println(GomokuProtocol.generateLoseMessage());
+                        opponent.outputStream.println(GomokuProtocol.generateWinMessage());
+                    }
+                }
+
+                else if (GomokuProtocol.isResetMessage(line)){
+                    for (int i = 0; i<maxConnections; i++){
+                        if (clientConns[i] != null){
+                            clientConns[i].outputStream.println(GomokuProtocol.generateResetMessage());
+                        }
+                    }
+                }
+
+                else if (GomokuProtocol.isGiveupMessage(line)){
+                    for (int i = 0; i<maxConnections; i++){
+                        if (clientConns[i] != null){
+                            clientConns[i].outputStream.println(GomokuProtocol.generateGiveupMessage());
                         }
                     }
                     break;
                 }
             }
 
-            // INSIDE CHAT :
-//            while (true) {
-//                String line = inputStream.readLine();
-//                if (line == null) {
-//                    continue;
-//                }
-//
-//                // user has performed a command:
-//                if (line.startsWith("C=")){
-//                    if (line.startsWith("/q", 2)){
-//                        // QUIT THE PROGRAM
-//                        break;
-//                    }
-//                    else if (line.startsWith("/nick", 2)){
-//                        // CHANGE NICKNAME
-//                        String newName = line.substring(8);
-//                        if (!nameIsUnique(newName)) {
-//                            outputStream.println("M=This username has already been taken.");
-//                        } else if (newName.contains("=")) {
-//                            outputStream.println("M=Please choose a username without a = character.");
-//                        } else {
-//                            for (int i = 0; i < maxConnections; i++) {
-//                                if (clientConns[i] != null) {
-//                                    clientConns[i].outputStream.println("M="+ this.getName()
-//                                            + " has changed name to " + newName);
-//                                    if (clientConns[i] != this){
-//                                        clientConns[i].outputStream.println("C=add=" + newName);
-//                                        clientConns[i].outputStream.println("C=remove=" + this.getName());
-//                                    }
-//                                }
-//                            }
-//                            this.setName(newName);
-//                        }
-//                    }
-//                }
-//
-//                // user has started a private message:
-//                else if (line.startsWith("P=")){
-//                    line = line.substring(2);
-//                    String recipient = line.split("=")[0];
-//                    String message = line.split("=")[1];
-//                    outputStream.println("Private msg to " + recipient + ": " + message);
-//                    for (int i = 0; i<maxConnections; i++){
-//                        if (clientConns[i] != null && clientConns[i].getName().equals(recipient)){
-//                            clientConns[i].outputStream.println("M=" + "Private msg from " + this.getName() + ": " + message);
-//                        }
-//                    }
-//                }
-//
-//                // user has send a message to everyone:
-//                else if (line.startsWith("M=")){
-//                    for (int i = 0; i < maxConnections; i++) {
-//                        if (clientConns[i] != null) {
-//                            clientConns[i].outputStream.println("M=" + this.getName() + ": " + line.substring(2));
-//                        }
-//                    }
-//                }
-//            }
+
 
             //free the current thread
             for (int i = 0; i < maxConnections; i++) {

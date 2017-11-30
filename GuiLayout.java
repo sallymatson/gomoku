@@ -184,7 +184,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
             } else if (buttonList.contains(button)) {
                 int col = mouseEvent.getX();
                 int row = mouseEvent.getY();
-                client.placeGamePiece(col, row);
+                client.placeGamePiece(row, col);
             }
         }
         catch (Exception ex) {
@@ -225,7 +225,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private void send(String text) {
         if (!text.isEmpty()) {
             // send the chat message to client to handle
-            client.sendMessage(text);
+            client.sendChat(text);
             // clear text
             typeArea.setText("");
         }
