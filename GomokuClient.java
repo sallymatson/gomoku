@@ -132,6 +132,8 @@ public class GomokuClient implements Runnable {
                     } else if (detail[0].equals(opponent_name)){
                         opponent_name = detail[1];
                     }
+                    System.out.println("Name: " + name);
+                    System.out.println("Opponent Name: " + opponent_name);
                     // TODO: alert players of the name change
                 }
                 else if (GomokuProtocol.isChatMessage(responseLine)){
