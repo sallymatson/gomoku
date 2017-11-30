@@ -30,6 +30,7 @@ public class GomokuClient implements Runnable {
     private static GuiLayout layout;
     private static boolean hasName = false;
     private String name = "My Name";
+    private boolean isBlack = false;
 
     public void setupConnection(String host, int portNumber) {
         layout = new GuiLayout(this);
@@ -68,9 +69,8 @@ public class GomokuClient implements Runnable {
         }
     }
 
-    public void placeGamePiece(String text) {
-        System.out.println("message to server: " + text);
-        outputStream.println(text);
+    public void placeGamePiece(int col, int row) {
+        outputStream.println(GomokuProtocol.generatePlayMessage(isBlack, row, col));
     }
 
     public void sendMessage(String text) {
@@ -80,6 +80,10 @@ public class GomokuClient implements Runnable {
 
     public void quit() {
         outputStream.println(GomokuProtocol.generateGiveupMessage());
+    }
+
+    public Color getColor() {
+        return Color.BLACK;
     }
 
     public void run() {
