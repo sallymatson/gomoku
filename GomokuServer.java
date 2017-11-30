@@ -47,20 +47,22 @@ public class GomokuServer {
                 System.out.println("Listening for connections...");
                 Socket conn = serverSocket.accept();
                 int i = 0;
+                // create player's thread, add to the server's list of client connections
                 for (i = 0; i < maxConnections; i++) {
                     if (clientConns[i] == null) {
                         (clientConns[i] = new clientThread(conn, clientConns)).start();
                         break;
                     }
                 }
+                // if there is not enough space left:
                 if (i == maxConnections) {
                     PrintStream outputStream = new PrintStream(conn.getOutputStream());
                     outputStream.println("At capacity, please try again later");
                     outputStream.close();
                     conn.close();
                 }
+                // if there is a waiting client, start a new game
                 else if (waitingClient[0] != null){
-                    System.out.println("There are now two players");
                     for (int j = 0; j<maxConnections/2; j++){
                         if (currentGames[j] == null){
                             currentGames[j] = new gomokuGame(waitingClient[0], clientConns[i]);
@@ -69,8 +71,8 @@ public class GomokuServer {
                         }
                     }
                 }
+                // if there is no waiting client, add the current client to the list of waiting clients
                 else {
-                    System.out.println("waiting for another player");
                     waitingClient[0] = clientConns[i];
                 }
             } catch (IOException e) {
@@ -81,31 +83,45 @@ public class GomokuServer {
 }
 
 class gomokuGame {
-    public boolean full = false;
     public clientThread p1;
     public clientThread p2;
     public int gameboard[][] = new int[15][15];
 
-    gomokuGame() {
-        // dummy constructor
-    }
-
     gomokuGame(clientThread p1arg, clientThread p2arg){
+
+        // assign player threads to the game:
         this.p1 = p1arg;
         this.p2 = p2arg;
-        System.out.println("IN constructor.");
-        System.out.println(p1arg);
-        System.out.println(p2arg);
+
+        // set both player's game to be this game
         p1.myGame = this;
         p2.myGame = this;
+
+        while (!p1.gameStarted || !p2.gameStarted){
+            continue;
+        }
+        // set the names for both players
         p1.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
         p2.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
         p1.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
         p2.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
         p1.setName("Player 1");
         p2.setName("Player 2");
+
+        // set them to be eachothers opponents
         p1.opponent = p2;
         p2.opponent = p1;
+
+        // randomly assign one black and one white
+        int random = (int) (Math.random() * 2);
+        if (random == 0) {
+            p1.outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
+            p2.outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
+        } else {
+            p2.outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
+            p1.outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
+        }
+
     }
 
     // TODO: make this
@@ -126,9 +142,9 @@ class clientThread extends Thread {
     private final clientThread[] clientConns;
     private int maxConnections;
     private int playerNumber = 0;
-    public boolean gameStarted = false;
     public gomokuGame myGame;
     public clientThread opponent;
+    public boolean gameStarted = false;
 
 
     public clientThread(Socket clientSocket, clientThread[] clientConns) {
@@ -154,42 +170,15 @@ class clientThread extends Thread {
             // open for one client, adds them to the list and informs everyone
             inputStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             outputStream = new PrintStream(clientSocket.getOutputStream());
+            gameStarted = true;
 
-            while (!gameStarted){
+            while (myGame == null){
                 continue;
             }
 
 
             System.out.println("Game has started.");
-            // game starts:
-            // set self name
-            // set opponent name
-            // set white/black
 
-
-
-
-            /*
-            this.setName("Player" + playerNumber);
-            outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player " + playerNumber));
-            // if the player is an even number, set up a game:
-            while (!gameStarted) {
-                if (playerNumber % 2 == 0) {
-                    // sets the other players names:
-                    clientConns[playerNumber - 1].outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player " + playerNumber));
-                    clientConns[playerNumber - 2].outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player " + (playerNumber - 1)));
-                    int random = (int) (Math.random() * 2);
-                    if (random == 0) {
-                        clientConns[playerNumber - 1].outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
-                        clientConns[playerNumber - 2].outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
-                    } else {
-                        clientConns[playerNumber - 2].outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
-                        clientConns[playerNumber - 1].outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
-                    }
-                    clientConns[playerNumber-2].gameStarted = true;
-                    gameStarted = true;
-                }
-            }*/
 
             while (true) {
                 String line = inputStream.readLine();
