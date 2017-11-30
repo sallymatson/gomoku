@@ -32,6 +32,7 @@ public class GomokuClient implements Runnable {
     private String name = "";
     private String opponent_name = "";
     private boolean isBlack;
+    public int gameboard[][] = new int[15][15];
 
     public Color getColor() {
         return (isBlack ? Color.BLACK : Color.WHITE);

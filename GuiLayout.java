@@ -5,6 +5,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.*;
+import java.awt.image.ImageObserver;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.ArrayList;
@@ -28,13 +29,20 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     // panelGomoku components
     private ArrayList<JButton> buttonList = new ArrayList<JButton>();
+    private Image tileImage;
 
     // panelChat components
     private TextArea chatArea;
     private TextArea typeArea;
     private JButton sendButton;
 
+    // tile placement constants
     private final int boardWidth = 15;
+    private final int cellWidth = 35;
+    private final int tileWidth = 20;
+    private final int horizontalOffset = 9;
+    private final int verticalOffset = 72;
+
 
     public GuiLayout(GomokuClient client) {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -101,24 +109,16 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         constraints.gridy = 0;
         panelGame.add(panelGomoku, constraints);
 
-        // panelGomoku.setLayout( new GridLayout( 1, 1, 0, 0) );
-//        for (int i = 0; i < 15*15; i++) {
-//            JButton button = new JButton(Integer.toString(i));
-//            button.setBorderPainted(false);
-//            button.setFocusPainted(false);
-//            button.setMaximumSize(new Dimension(10, 10));
-//            button.setMinimumSize(new Dimension(10, 10));
-//            // button.setContentAreaFilled(false);
-//            button.addMouseListener(this);
-//            // button.setBorder(new LineBorder(Color.BLACK));
-//            button.setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
-//            buttonList.add(button);
-//            panelGomoku.add(button);
-//        }
         ImageIcon boardImage = new ImageIcon("board_small.png");
         JLabel boardLabel = new JLabel("", boardImage, JLabel.HORIZONTAL);
         boardLabel.addMouseListener(this);
         panelGomoku.add(boardLabel);
+
+        try {
+            tileImage = ImageIO.read(new File("tile.png"));
+        } catch (IOException e) {
+            System.out.println("Could not load tile image");
+        }
     }
 
     private void setUpPanelChat() {
@@ -238,7 +238,28 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     }
 
     private void drawTiles(Graphics graphics) {
-        graphics.setColor(client.getColor());
-        graphics.fillOval(7, 244, 28, 28);
+        client.gameboard[4][6] = 2;
+        client.gameboard[8][2] = 1;
+
+        for (int row = 0; row < boardWidth; row++) {
+            for (int col = 0; col < boardWidth; col++) {
+                if (row % 2 == col % 2) { // if (client.gameboard[row][col] == 1) {
+                    int tileX = horizontalOffset + col * cellWidth;
+                    int tileY = verticalOffset + row * cellWidth;
+                    graphics.drawImage(tileImage, tileX, tileY, null);
+
+                    // draw a white oval
+                    // graphics.setColor(Color.WHITE);
+                    // graphics.fillOval(horizontalOffset + col * cellWidth, verticalOffset + row * cellWidth, tileWidth, tileWidth);
+                }
+                else { // if (client.gameboard[row][col] == 2) {
+
+
+                    // draw a black oval
+                    // graphics.setColor(Color.BLACK);
+                    // graphics.fillOval(horizontalOffset + col * cellWidth, verticalOffset + row * cellWidth, tileWidth, tileWidth);
+                }
+            }
+        }
     }
 }
