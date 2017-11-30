@@ -117,9 +117,11 @@ class gomokuGame {
         if (random == 0) {
             p1.outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
             p2.outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
+            p1.colorNum = 2;
         } else {
             p2.outputStream.println(GomokuProtocol.generateSetBlackColorMessage());
             p1.outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
+            p2.colorNum = 2;
         }
 
     }
@@ -141,7 +143,7 @@ class clientThread extends Thread {
     private Socket clientSocket = null;
     private final clientThread[] clientConns;
     private int maxConnections;
-    private int playerNumber = 0;
+    public int colorNum = 1; // 2 for black, 1 for white
     public gomokuGame myGame;
     public clientThread opponent;
     public boolean gameStarted = false;
@@ -186,53 +188,37 @@ class clientThread extends Thread {
 
 
                 if (GomokuProtocol.isChatMessage(line)){
-                    for (int i = 0; i<maxConnections; i++){
-                        if (clientConns[i] != null){
-                            outputStream.println(line);
-                        }
-                    }
+                    outputStream.println(line);
+                    opponent.outputStream.println(line);
                 }
                 else if (GomokuProtocol.isChangeNameMessage(line)){
                     String[] detail = GomokuProtocol.getChangeNameDetail(line);
-                    if (nameIsUnique(detail[1])){
-                        for (int i = 0; i<maxConnections; i++){
-                            if (clientConns[i] != null){
-                                clientConns[i].outputStream.println(line);
-                            }
-                        }
+                    if (!detail[1].equals(opponent.getName())){
+                        this.setName(detail[1]);
+                        outputStream.println(line);
+                        opponent.outputStream.println(line);
                     }
                 }
 
                 else if (GomokuProtocol.isPlayMessage(line)){
                     int detail[] = GomokuProtocol.getPlayDetail(line);
                     // black = 2, white = 1, empty = 0
-                    myGame.gameboard[detail[1]][detail[2]] = detail[0] + 1;
+                    myGame.gameboard[detail[1]][detail[2]] = colorNum;
                     int winState = myGame.checkWinState();
                     if (winState == 0){
                        // game continues with the new play
-                       for (int i = 0; i<maxConnections; i++){
-                           if (clientConns[i] != null){
-                               clientConns[i].outputStream.println(line);
-                           }
-                       }
+                       outputStream.println(line);
+                       opponent.outputStream.println(line);
                     }
                     else if (winState == 1 && detail[0] == 0 || winState == 2 && detail[0] == 1){
                         // the player who JUST played (and thus sent the gameplay message) has WON
                         outputStream.println(GomokuProtocol.generateWinMessage());
-                        for (int i = 0; i<maxConnections; i++){
-                            if (clientConns[i] != null && clientConns[i] != this){
-                                clientConns[i].outputStream.println(GomokuProtocol.generateLoseMessage());
-                            }
-                        }
+                        opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
                     }
-                    else{
+                    else {
                         // the player who JUST played (and thus sent the gameplay message) has LOST
                         outputStream.println(GomokuProtocol.generateLoseMessage());
-                        for (int i = 0; i<maxConnections; i++){
-                            if (clientConns[i] != null && clientConns[i] != this){
-                                clientConns[i].outputStream.println(GomokuProtocol.generateWinMessage());
-                            }
-                        }
+                        opponent.outputStream.println(GomokuProtocol.generateWinMessage());
                     }
                 }
 
