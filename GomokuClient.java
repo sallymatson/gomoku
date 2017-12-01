@@ -32,6 +32,11 @@ public class GomokuClient implements Runnable {
     private String name = "";
     private String opponent_name = "";
     private boolean isBlack;
+    public int gameboard[][] = new int[15][15];
+
+    public Color getColor() {
+        return (isBlack ? Color.BLACK : Color.WHITE);
+    }
 
     public void setupConnection(String host, int portNumber) {
         layout = new GuiLayout(this);
@@ -40,7 +45,6 @@ public class GomokuClient implements Runnable {
         // String host = "localhost";
 
         // Open a socket on a given host and port. Open input and output streams.
-
 
         try {
             // open socket on the host and port,
@@ -100,7 +104,6 @@ public class GomokuClient implements Runnable {
     }
     /**************************************************************************/
 
-
     public void run() {
         /*
          * Keep on reading from the socket to process messages from the
@@ -144,13 +147,12 @@ public class GomokuClient implements Runnable {
                 }
                 else if (GomokuProtocol.isPlayMessage(responseLine)){
                     int[] detail = GomokuProtocol.getPlayDetail(responseLine);
-                    if (detail[0] == 1 && isBlack || detail[0] == 0 && !isBlack){
-                        // this player's move is coming back. Probably don't need to do anything?
-                    } else {
-                        int row = detail[1];
-                        int col = detail[2];
-                        // send message to gameboard that the opponent has played
-                    }
+                    int color = detail[0];
+                    int row = detail[1];
+                    int col = detail[2];
+                    gameboard[row][col] = color + 1; // probably off by 1
+                    // send message to gameboard that the opponent has played
+                    layout.placeGamePiece();
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
                     System.out.println("A player has quit the game.");

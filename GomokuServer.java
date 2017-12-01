@@ -253,7 +253,9 @@ class clientThread extends Thread {
                     int detail[] = GomokuProtocol.getPlayDetail(line);
                     // black = 2, white = 1, empty = 0
                     myGame.gameboard[detail[1]][detail[2]] = colorNum;
+                  
                     int winState = myGame.checkWinState(detail[1], detail[2], colorNum);
+
                     if (winState == 0){
                        // game continues with the new play
                        outputStream.println(line);
