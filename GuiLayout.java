@@ -171,6 +171,12 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         sendButton.addActionListener(this);
     }
 
+    // client-accessible methods
+    public void placeGamePiece() {
+        validate();
+        repaint();
+    }
+
     // MouseListener methods
     public void mouseClicked(MouseEvent mouseEvent) {
         try {
@@ -182,20 +188,25 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
             } else if (button == buttonGiveUp) {
                 client.quit();
             } else if (buttonList.contains(button)) {
+                // TODO: delete this
                 int col = mouseEvent.getX();
                 int row = mouseEvent.getY();
                 client.placeGamePiece(row, col);
             }
         }
         catch (Exception ex) {
-            System.out.println("Not a JButton dude");
+            // not a JButton i guess lol
         }
 
-//        ImageIcon tileImage = new ImageIcon("tile.png");
-//        JLabel tileLabel = new JLabel("", tileImage, JLabel.HORIZONTAL);
-//        panelGomoku.add(tileLabel);
-//        panelGomoku.revalidate();
-//        panelGomoku.repaint();
+        if (mouseEvent.getX() > 0 &&
+            mouseEvent.getX() < (boardWidth * cellWidth) &&
+            mouseEvent.getY() > 0 &&
+            mouseEvent.getY() < (boardWidth * cellWidth))
+        {
+            int row = 6; // TODO: do it based on mouseEvent.getY() % cellWidth!
+            int col = 8; // TODO: do it based on mouseEvent.getX() % cellWidth!
+            client.placeGamePiece(row, col);
+        }
     }
     public void mouseEntered(MouseEvent MouseEvent) {}
     public void mouseExited(MouseEvent MouseEvent) {}
@@ -238,26 +249,20 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     }
 
     private void drawTiles(Graphics graphics) {
-        client.gameboard[4][6] = 2;
-        client.gameboard[8][2] = 1;
-
         for (int row = 0; row < boardWidth; row++) {
             for (int col = 0; col < boardWidth; col++) {
-                if (row % 2 == col % 2) { // if (client.gameboard[row][col] == 1) {
+                System.out.println(client.gameboard[row][col]);
+                if (client.gameboard[row][col] == 1) {
+                    // draw a white oval
                     int tileX = horizontalOffset + col * cellWidth;
                     int tileY = verticalOffset + row * cellWidth;
                     graphics.drawImage(tileImage, tileX, tileY, null);
-
-                    // draw a white oval
-                    // graphics.setColor(Color.WHITE);
-                    // graphics.fillOval(horizontalOffset + col * cellWidth, verticalOffset + row * cellWidth, tileWidth, tileWidth);
                 }
-                else { // if (client.gameboard[row][col] == 2) {
-
-
+                else if (client.gameboard[row][col] == 2) {
                     // draw a black oval
-                    // graphics.setColor(Color.BLACK);
-                    // graphics.fillOval(horizontalOffset + col * cellWidth, verticalOffset + row * cellWidth, tileWidth, tileWidth);
+                    int tileX = horizontalOffset + col * cellWidth;
+                    int tileY = verticalOffset + row * cellWidth;
+                    graphics.drawImage(tileImage, tileX, tileY, null);
                 }
             }
         }

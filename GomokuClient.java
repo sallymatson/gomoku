@@ -147,13 +147,12 @@ public class GomokuClient implements Runnable {
                 }
                 else if (GomokuProtocol.isPlayMessage(responseLine)){
                     int[] detail = GomokuProtocol.getPlayDetail(responseLine);
-                    if (detail[0] == 1 && isBlack || detail[0] == 0 && !isBlack){
-                        // this player's move is coming back. Probably don't need to do anything?
-                    } else {
-                        int row = detail[1];
-                        int col = detail[2];
-                        // send message to gameboard that the opponent has played
-                    }
+                    int color = detail[0];
+                    int row = detail[1];
+                    int col = detail[2];
+                    gameboard[row][col] = color + 1; // probably off by 1
+                    // send message to gameboard that the opponent has played
+                    layout.placeGamePiece();
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
                     System.out.println("A player has quit the game.");
