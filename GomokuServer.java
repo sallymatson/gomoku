@@ -197,7 +197,6 @@ class clientThread extends Thread {
     public clientThread opponent;
     public boolean gameStarted = false;
 
-
     public clientThread(Socket clientSocket, clientThread[] clientConns) {
         this.clientSocket = clientSocket;
         this.clientConns = clientConns;
@@ -227,14 +226,11 @@ class clientThread extends Thread {
                 continue;
             }
 
-
             System.out.println("Game has started.");
-
 
             while (true) {
                 String line = inputStream.readLine();
                 System.out.println("message from client: " + line);
-
 
                 if (GomokuProtocol.isChatMessage(line)){
                     outputStream.println(line);
@@ -291,7 +287,7 @@ class clientThread extends Thread {
                 }
             }
 
-
+            System.out.println("stopped one of the threads");
 
             //free the current thread
             for (int i = 0; i < maxConnections; i++) {

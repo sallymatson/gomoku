@@ -119,10 +119,12 @@ public class GomokuClient implements Runnable {
                 if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
                     System.out.println("You have been randomly assigned black.");
                     isBlack = true;
+                    layout.chatMessage("server", responseLine);
                 }
                 else if (GomokuProtocol.isSetWhiteColorMessage(responseLine)){
                     System.out.println("You have been randomly assigned white.");
                     isBlack = false;
+                    layout.chatMessage("server", responseLine);
                 }
                 else if (GomokuProtocol.isChangeNameMessage(responseLine)){
                     String[] detail = GomokuProtocol.getChangeNameDetail(responseLine);
@@ -138,12 +140,14 @@ public class GomokuClient implements Runnable {
                     System.out.println("Name: " + name);
                     System.out.println("Opponent Name: " + opponent_name);
                     // TODO: alert players of the name change
+                    layout.chatMessage("server", responseLine);
                 }
                 else if (GomokuProtocol.isChatMessage(responseLine)){
                     String[] detail = GomokuProtocol.getChatDetail(responseLine);
                     String sender = detail[0];
                     String msg = detail[1];
                     // TODO: send this to gui however that's going to happen
+                    layout.chatMessage(sender, msg);
                 }
                 else if (GomokuProtocol.isPlayMessage(responseLine)){
                     int[] detail = GomokuProtocol.getPlayDetail(responseLine);
@@ -152,22 +156,26 @@ public class GomokuClient implements Runnable {
                     int col = detail[2];
                     gameboard[row][col] = color + 1; // probably off by 1
                     // send message to gameboard that the opponent has played
-                    layout.placeGamePiece();
+                    layout.placeGamePiece(row, col, color + 1);
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
                     System.out.println("A player has quit the game.");
+                    layout.chatMessage("server", responseLine);
                     closeConnection();
                 }
                 else if (GomokuProtocol.isLoseMessage(responseLine)){
                     System.out.println("Sorry, you lost :(");
+                    layout.chatMessage("server", responseLine);
                     closeConnection();
                 }
                 else if (GomokuProtocol.isWinMessage(responseLine)){
                     System.out.println("Congrats, you won!");
+                    layout.chatMessage("server", responseLine);
                     closeConnection();
                 }
                 else if (GomokuProtocol.isResetMessage(responseLine)){
                     // send to gui or AI
+                    layout.chatMessage("server", responseLine);
                 }
             }
         } catch (IOException e) {
