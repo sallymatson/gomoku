@@ -43,6 +43,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private final int horizontalOffset = 9;
     private final int verticalOffset = 72;
 
+    public int gameboard[][] = new int[15][15];
+
 
     public GuiLayout(GomokuClient client) {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -172,9 +174,15 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     }
 
     // client-accessible methods
-    public void placeGamePiece() {
+    public void placeGamePiece(int row, int col, int val) {
+        gameboard[row][col] = val + 1; // 0 -> 1 for white, 1 -> 2 for black
         validate();
         repaint();
+    }
+
+    public void chatMessage(String sender, String message) {
+        chatArea.setText(chatArea.getText() + sender + ": " + message + '\n');
+        chatArea.setCaretPosition(chatArea.getText().length());
     }
 
     // MouseListener methods
@@ -203,8 +211,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
             mouseEvent.getY() > 0 &&
             mouseEvent.getY() < (boardWidth * cellWidth))
         {
-            int row = 6; // TODO: do it based on mouseEvent.getY() % cellWidth!
-            int col = 8; // TODO: do it based on mouseEvent.getX() % cellWidth!
+            int row = mouseEvent.getY() / cellWidth;
+            int col = mouseEvent.getX() / cellWidth;
             client.placeGamePiece(row, col);
         }
     }
@@ -251,14 +259,15 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private void drawTiles(Graphics graphics) {
         for (int row = 0; row < boardWidth; row++) {
             for (int col = 0; col < boardWidth; col++) {
-                System.out.println(client.gameboard[row][col]);
-                if (client.gameboard[row][col] == 1) {
+                if (gameboard[row][col] == 1) {
+                    System.out.println("drawing white tile at " + row + ", " + col);
                     // draw a white oval
                     int tileX = horizontalOffset + col * cellWidth;
                     int tileY = verticalOffset + row * cellWidth;
                     graphics.drawImage(tileImage, tileX, tileY, null);
                 }
-                else if (client.gameboard[row][col] == 2) {
+                else if (gameboard[row][col] == 2) {
+                    System.out.println("drawing black tile at " + row + ", " + col);
                     // draw a black oval
                     int tileX = horizontalOffset + col * cellWidth;
                     int tileY = verticalOffset + row * cellWidth;
