@@ -13,6 +13,7 @@ import sun.font.TrueTypeFont;
 
 import java.net.*;
 import java.io.*;
+import java.lang.*;
 
 
 public class GomokuServer {
@@ -126,13 +127,61 @@ class gomokuGame {
 
     }
 
-    // TODO: make this
-    public int checkWinState(){
-        // if black wins,
-        //return 2;
-        // if white wins,
-        //return 1;
-        // if nobody wins,
+    public int checkWinState(int row, int col, int colorNum){
+        String winstate = (colorNum == 1) ? "11111" : "22222";
+        StringBuilder checkRow = new StringBuilder();
+        for (int i = 0; i<=14; i++){
+            checkRow.append(gameboard[row][i]);
+        }
+        StringBuilder checkCol = new StringBuilder();
+        for (int i = 0; i<=14; i++){
+            checkCol.append(gameboard[i][col]);
+        }
+        StringBuilder posDiagonal = new StringBuilder();
+        if (row+col < 14 && row+col > 3){
+            int rowStart = row+col;
+            int colStart = 0;
+            int rowNum = rowStart;
+            while (colStart <= rowStart){
+                posDiagonal.append(gameboard[rowNum][colStart]);
+                colStart++;
+                rowNum--;
+            }
+        }
+        else if (row+col >= 14 && row+col < 25){
+            int rowStart = 14;
+            int colStart = row + col - 14;
+            int colNum = colStart;
+            while (rowStart >= colStart){
+                posDiagonal.append(gameboard[rowStart][colNum]);
+                rowStart--;
+                colNum++;
+            }
+        }
+        StringBuilder negDiagonal = new StringBuilder();
+        if (row>col && row < 11){
+            int rowStart = row-col;
+            int colStart = 0;
+            while (rowStart <= 14){
+                negDiagonal.append(gameboard[rowStart][colStart]);
+                rowStart++;
+                colStart++;
+            }
+        }
+        else if (col>=row && col < 11){
+            int rowStart = 0;
+            int colStart = col-row;
+            while (colStart <= 14){
+                negDiagonal.append(gameboard[rowStart][colStart]);
+                rowStart++;
+                colStart++;
+            }
+        }
+        // check if any of the win conditions have been found:
+        if (checkRow.toString().contains(winstate) || checkCol.toString().contains(winstate) ||
+                posDiagonal.toString().contains(winstate) || negDiagonal.toString().contains(winstate)) {
+            return colorNum;
+        }
         return 0;
     }
 }
@@ -204,7 +253,9 @@ class clientThread extends Thread {
                     int detail[] = GomokuProtocol.getPlayDetail(line);
                     // black = 2, white = 1, empty = 0
                     myGame.gameboard[detail[1]][detail[2]] = colorNum;
-                    int winState = myGame.checkWinState();
+                  
+                    int winState = myGame.checkWinState(detail[1], detail[2], colorNum);
+
                     if (winState == 0){
                        // game continues with the new play
                        outputStream.println(line);

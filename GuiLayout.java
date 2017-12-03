@@ -1,13 +1,16 @@
 package gomoku;
 
 import javax.swing.*;
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.*;
+import java.awt.image.ImageObserver;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 
@@ -15,72 +18,194 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     private GomokuClient client;
     private JPanel panelControl;
+    private JPanel panelGame;
     private JPanel panelGomoku;
     private JPanel panelChat;
-    private ArrayList<JButton> buttonList = new ArrayList<JButton>();
-    private JButton buttonGiveUp;
 
+    // panelControl components
+    private JButton buttonJoinGame;
+    private JButton buttonGiveUp;
+    private JButton buttonReset;
+
+    // panelGomoku components
+    private ArrayList<JButton> buttonList = new ArrayList<JButton>();
+    private Image tileImage;
+
+    // panelChat components
+    private TextArea chatArea;
+    private TextArea typeArea;
+    private JButton sendButton;
+
+    // tile placement constants
     private final int boardWidth = 15;
+    private final int cellWidth = 35;
+    private final int tileWidth = 20;
+    private final int horizontalOffset = 9;
+    private final int verticalOffset = 72;
+
 
     public GuiLayout(GomokuClient client) {
-
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        getContentPane().setLayout(new BorderLayout());
+        getContentPane().setLayout(new GridBagLayout());
 
-        setTitle("Gomoku");
-        setupPanelControl();
+        setUpPanelControl();
+        setUpPanelGame();
         setUpPanelGomoku();
         setUpPanelChat();
 
-        setSize(new Dimension(640, 480));
+        setTitle("Gomoku");
+        setSize(new Dimension(800, 600));
         setVisible(true);
+        setResizable(false);
 
         this.client = client;
     }
 
-    private void setupPanelControl() {
+    private void setUpPanelControl() {
         panelControl = new JPanel();
-        add(panelControl, BorderLayout.LINE_START);
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.insets = new Insets(0, 0, 0, 0);
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.weightx = 1;
+        constraints.weighty = .05;
+        add(panelControl, constraints);
+        panelControl.setLayout(new FlowLayout());
+
+        buttonJoinGame = new JButton("Join Game");
+        buttonJoinGame.addMouseListener(this);
+        panelControl.add(buttonJoinGame);
+
         buttonGiveUp = new JButton("Give Up");
         buttonGiveUp.addMouseListener(this);
         panelControl.add(buttonGiveUp);
+
+        buttonReset = new JButton("Reset");
+        buttonReset.addMouseListener(this);
+        panelControl.add(buttonReset);
+    }
+
+    private void setUpPanelGame() {
+        panelGame = new JPanel();
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.weightx = 0.0;
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.weightx = 1;
+        constraints.weighty = .95;
+        add(panelGame, constraints);
+        panelGame.setLayout(new GridBagLayout());
     }
 
     private void setUpPanelGomoku() {
         panelGomoku = new JPanel();
-        add(panelGomoku, BorderLayout.CENTER);
-        panelGomoku.setLayout( new GridLayout( 15, 15, 0, 0) );
-        for (int i = 0; i < 15*15; i++) {
-            JButton button = new JButton(Integer.toString(i));
-            button.setBorderPainted(false);
-            button.setFocusPainted(false);
-            button.setMaximumSize(new Dimension(30, 30));
-            button.setMinimumSize(new Dimension(30, 30));
-            button.setContentAreaFilled(false);
-            button.addMouseListener(this);
-            //button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            buttonList.add(button);
-            panelGomoku.add(button);
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.weightx = 0;
+        constraints.weighty = 1;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        panelGame.add(panelGomoku, constraints);
+
+        ImageIcon boardImage = new ImageIcon("board_small.png");
+        JLabel boardLabel = new JLabel("", boardImage, JLabel.HORIZONTAL);
+        boardLabel.addMouseListener(this);
+        panelGomoku.add(boardLabel);
+
+        try {
+            tileImage = ImageIO.read(new File("tile.png"));
+        } catch (IOException e) {
+            System.out.println("Could not load tile image");
         }
     }
 
     private void setUpPanelChat() {
         panelChat = new JPanel();
-        add(panelChat, BorderLayout.LINE_END);
+        GridBagConstraints constraintsGame = new GridBagConstraints();
+        // constraintsGame.insets = new Insets(2, 2, 2, 2);
+        constraintsGame.fill = GridBagConstraints.BOTH;
+        constraintsGame.weightx = 1;
+        constraintsGame.weighty = 1;
+        constraintsGame.gridx = 1;
+        constraintsGame.gridy = 0;
+        panelGame.add(panelChat, constraintsGame);
+
+        panelChat.setLayout(new GridBagLayout());
+        panelChat.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        GridBagConstraints constraintsChat = new GridBagConstraints();
+        constraintsChat.insets = new Insets(2, 2, 2, 2);
+        constraintsChat.fill = GridBagConstraints.BOTH;
+        constraintsChat.weightx = 1;
+
+        // add chat area
+        chatArea = new TextArea("", 1, 1, TextArea.SCROLLBARS_VERTICAL_ONLY);
+        chatArea.setEditable(false);
+        constraintsChat.gridx = 0;
+        constraintsChat.gridy = 0;
+        constraintsChat.gridwidth = 2;
+        constraintsChat.weighty = 0.95;
+        panelChat.add(chatArea, constraintsChat);
+
+        // add text area
+        typeArea = new TextArea("", 1, 1, TextArea.SCROLLBARS_VERTICAL_ONLY);
+        constraintsChat.fill = GridBagConstraints.BOTH;
+        constraintsChat.gridx = 0;
+        constraintsChat.gridy = 1;
+        constraintsChat.gridwidth = 1;
+        constraintsChat.weightx = 0.9;
+        constraintsChat.weighty = 0.05;
+        panelChat.add(typeArea, constraintsChat);
+        typeArea.addKeyListener(this);
+
+        // add send button
+        sendButton = new JButton("Send");
+        constraintsChat.fill = GridBagConstraints.BOTH;
+        constraintsChat.gridx = 1;
+        constraintsChat.gridy = 1;
+        constraintsChat.gridwidth = 1;
+        constraintsChat.weightx = 0.1;
+        constraintsChat.weighty = 0.05;
+        panelChat.add(sendButton, constraintsChat);
+        sendButton.addActionListener(this);
+    }
+
+    // client-accessible methods
+    public void placeGamePiece() {
+        validate();
+        repaint();
     }
 
     // MouseListener methods
-    public void mouseClicked(MouseEvent MouseEvent) {
-        JButton button = (JButton)(MouseEvent.getSource());
-        if (button == buttonGiveUp) {
-            client.quit();
-        } else if (buttonList.contains(button)) {
-            //client.placeGamePiece(button.getText());
-            // dummy data
-            int row = 0;
-            int col = 0;
+    public void mouseClicked(MouseEvent mouseEvent) {
+        try {
+            JButton button = (JButton) (mouseEvent.getSource());
+            if (button == buttonJoinGame) {
+                // attempt to join a new game
+            } else if (button == buttonReset) {
+                // reset the game
+            } else if (button == buttonGiveUp) {
+                client.quit();
+            } else if (buttonList.contains(button)) {
+                // TODO: delete this
+                int col = mouseEvent.getX();
+                int row = mouseEvent.getY();
+                client.placeGamePiece(row, col);
+            }
+        }
+        catch (Exception ex) {
+            // not a JButton i guess lol
+        }
+
+        if (mouseEvent.getX() > 0 &&
+            mouseEvent.getX() < (boardWidth * cellWidth) &&
+            mouseEvent.getY() > 0 &&
+            mouseEvent.getY() < (boardWidth * cellWidth))
+        {
+            int row = 6; // TODO: do it based on mouseEvent.getY() % cellWidth!
+            int col = 8; // TODO: do it based on mouseEvent.getX() % cellWidth!
             client.placeGamePiece(row, col);
-            // get row, col from MouseEvent.getSource(), or maybe from mouse position?
         }
     }
     public void mouseEntered(MouseEvent MouseEvent) {}
@@ -90,12 +215,56 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     // KeyListener methods
     public void keyPressed(KeyEvent keyEvent) {
-        // notify client
-        // client.sendMessage(text in box);
+        if(keyEvent.getSource() == typeArea) {
+            if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER)  {
+                send(typeArea.getText());
+                // prevent enter from typing in the box
+                keyEvent.consume();
+            }
+        }
     }
     public void keyReleased(KeyEvent keyEvent) {}
     public void keyTyped(KeyEvent keyEvent) {}
 
     // ActionListener methods
-    public void actionPerformed(ActionEvent actionEvent) {}
+    public void actionPerformed(ActionEvent actionEvent) {
+        if (actionEvent.getSource() == sendButton) {
+            send(typeArea.getText());
+        }
+    }
+
+    private void send(String text) {
+        if (!text.isEmpty()) {
+            // send the chat message to client to handle
+            client.sendChat(text);
+            // clear text
+            typeArea.setText("");
+        }
+    }
+
+    @Override
+    public void paint(Graphics graphics) {
+        super.paint(graphics); // call to JFrame paint()
+        drawTiles(graphics);
+    }
+
+    private void drawTiles(Graphics graphics) {
+        for (int row = 0; row < boardWidth; row++) {
+            for (int col = 0; col < boardWidth; col++) {
+                System.out.println(client.gameboard[row][col]);
+                if (client.gameboard[row][col] == 1) {
+                    // draw a white oval
+                    int tileX = horizontalOffset + col * cellWidth;
+                    int tileY = verticalOffset + row * cellWidth;
+                    graphics.drawImage(tileImage, tileX, tileY, null);
+                }
+                else if (client.gameboard[row][col] == 2) {
+                    // draw a black oval
+                    int tileX = horizontalOffset + col * cellWidth;
+                    int tileY = verticalOffset + row * cellWidth;
+                    graphics.drawImage(tileImage, tileX, tileY, null);
+                }
+            }
+        }
+    }
 }
