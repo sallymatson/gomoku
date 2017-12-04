@@ -90,17 +90,25 @@ class gomokuGame {
 
     gomokuGame(clientThread p1arg, clientThread p2arg){
 
+        // waits for the threads to both get set up:
+        while (!p1arg.gameStarted || !p2arg.gameStarted){
+            continue;
+        }
+
         // assign player threads to the game:
         this.p1 = p1arg;
         this.p2 = p2arg;
 
+
+        System.out.println("p1 myGame: " + p1.myGame);
+        System.out.println("p2 myGame: " + p2.myGame);
         // set both player's game to be this game
         p1.myGame = this;
         p2.myGame = this;
+        System.out.println("p1 myGame: " + p1.myGame);
+        System.out.println("p2 myGame: " + p2.myGame);
 
-        while (!p1.gameStarted || !p2.gameStarted){
-            continue;
-        }
+
         // set the names for both players
         p1.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
         p2.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
@@ -223,10 +231,11 @@ class clientThread extends Thread {
             gameStarted = true;
 
             while (myGame == null){
-                continue;
+                System.out.println("null");
             }
 
             System.out.println("Game has started.");
+            System.out.println("my color isssssss: " + colorNum);
 
             while (true) {
                 String line = inputStream.readLine();
