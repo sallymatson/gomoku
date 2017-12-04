@@ -111,8 +111,6 @@ public class GomokuClient implements Runnable {
             // gets information from the server:
             while ((responseLine = inputStream.readLine()) != null) {
 
-                System.out.println("Message from server: " + responseLine);
-
                 if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
                     isBlack = true;
                     layout.startGame(isBlack);
@@ -134,16 +132,15 @@ public class GomokuClient implements Runnable {
                     } else if (detail[0].equals(opponent_name)){
                         opponent_name = detail[1];
                     }
-                    System.out.println("Name: " + name);
-                    System.out.println("Opponent Name: " + opponent_name);
                     // TODO: alert players of the name change
-                    layout.chatMessage("server", responseLine);
+                    if (!detail[0].equals("")) {
+                        layout.chatMessage("server", detail[0] + " has changed name to " + detail[1]);
+                    }
                 }
                 else if (GomokuProtocol.isChatMessage(responseLine)){
                     String[] detail = GomokuProtocol.getChatDetail(responseLine);
                     String sender = detail[0];
                     String msg = detail[1];
-                    // TODO: send this to gui however that's going to happen
                     layout.chatMessage(sender, msg);
                 }
                 else if (GomokuProtocol.isPlayMessage(responseLine)){

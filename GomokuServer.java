@@ -167,7 +167,7 @@ class gomokuGame {
             }
         }
         StringBuilder negDiagonal = new StringBuilder();
-        if (row>col && row < 11){
+        if (row>col){
             int rowStart = row-col;
             int colStart = 0;
             while (rowStart <= 14){
@@ -176,7 +176,7 @@ class gomokuGame {
                 colStart++;
             }
         }
-        else if (col>=row && col < 11){
+        else if (col>=row){
             int rowStart = 0;
             int colStart = col-row;
             while (colStart <= 14){
@@ -185,6 +185,11 @@ class gomokuGame {
                 colStart++;
             }
         }
+        //System.out.println("Check row: " + checkRow.toString());
+        //System.out.println("Check col: " + checkCol.toString());
+        //System.out.println("Check posDiag: " + posDiagonal.toString());
+        //System.out.println("Check negDiag: " + negDiagonal.toString());
+
         // check if any of the win conditions have been found:
         if (checkRow.toString().contains(winstate) || checkCol.toString().contains(winstate) ||
                 posDiagonal.toString().contains(winstate) || negDiagonal.toString().contains(winstate)) {
@@ -211,15 +216,6 @@ class clientThread extends Thread {
         maxConnections = clientConns.length;
     }
 
-    private boolean nameIsUnique(String name){
-        for (int i = 0; i < maxConnections; i++){
-            if (clientConns[i] != null && clientConns[i].getName().equals(name)){
-                return false;
-            }
-        }
-        return true;
-    }
-
     public void run() {
         int maxConnections = this.maxConnections;
         clientThread[] clientConns = this.clientConns;
@@ -230,12 +226,13 @@ class clientThread extends Thread {
             outputStream = new PrintStream(clientSocket.getOutputStream());
             gameStarted = true;
 
+
+            // TODO: make this more formal
             while (myGame == null){
-                System.out.println("null");
+                System.out.print("");
             }
 
             System.out.println("Game has started.");
-            System.out.println("my color isssssss: " + colorNum);
 
             while (true) {
                 String line = inputStream.readLine();
@@ -247,10 +244,13 @@ class clientThread extends Thread {
                 }
                 else if (GomokuProtocol.isChangeNameMessage(line)){
                     String[] detail = GomokuProtocol.getChangeNameDetail(line);
-                    if (!detail[1].equals(opponent.getName())){
+                    if (!detail[1].equals(opponent.getName()) && !detail[1].equals("")){
                         this.setName(detail[1]);
                         outputStream.println(line);
                         opponent.outputStream.println(line);
+                    }
+                    else {
+                        outputStream.println(GomokuProtocol.generateChatMessage("Server", "Nickname invalid or already taken."));
                     }
                 }
 
