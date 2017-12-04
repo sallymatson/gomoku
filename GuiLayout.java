@@ -29,7 +29,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     // panelGomoku components
     private ArrayList<JButton> buttonList = new ArrayList<JButton>();
-    private Image tileImage;
+    private Image whiteTileImage, blackTileImage;
 
     // panelChat components
     private TextArea chatArea;
@@ -43,7 +43,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private final int horizontalOffset = 9;
     private final int verticalOffset = 72;
 
-    public int gameboard[][] = new int[15][15];
+    private int gameboard[][] = new int[15][15];
+    private boolean isMyTurn = false;
 
 
     public GuiLayout(GomokuClient client) {
@@ -117,7 +118,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         panelGomoku.add(boardLabel);
 
         try {
-            tileImage = ImageIO.read(new File("tile.png"));
+            whiteTileImage = ImageIO.read(new File("white_tile.png"));
+            blackTileImage = ImageIO.read(new File("black_tile.png"));
         } catch (IOException e) {
             System.out.println("Could not load tile image");
         }
@@ -174,8 +176,14 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     }
 
     // client-accessible methods
+    public void startGame(boolean isBlack) {
+        isMyTurn = isBlack;
+    }
+
     public void placeGamePiece(int row, int col, int val) {
         gameboard[row][col] = val + 1; // 0 -> 1 for white, 1 -> 2 for black
+        // swap turns
+        isMyTurn = !isMyTurn;
         validate();
         repaint();
     }
@@ -206,6 +214,11 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
             // not a JButton i guess lol
         }
 
+        if (!isMyTurn) {
+            return;
+        }
+
+        // place game piece
         if (mouseEvent.getX() > 0 &&
             mouseEvent.getX() < (boardWidth * cellWidth) &&
             mouseEvent.getY() > 0 &&
@@ -213,7 +226,10 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         {
             int row = mouseEvent.getY() / cellWidth;
             int col = mouseEvent.getX() / cellWidth;
-            client.placeGamePiece(row, col);
+
+            if (gameboard[row][col] == 0) {
+                client.placeGamePiece(row, col);
+            }
         }
     }
     public void mouseEntered(MouseEvent MouseEvent) {}
@@ -264,14 +280,14 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
                     // draw a white oval
                     int tileX = horizontalOffset + col * cellWidth;
                     int tileY = verticalOffset + row * cellWidth;
-                    graphics.drawImage(tileImage, tileX, tileY, null);
+                    graphics.drawImage(whiteTileImage, tileX, tileY, null);
                 }
                 else if (gameboard[row][col] == 2) {
                     System.out.println("drawing black tile at " + row + ", " + col);
                     // draw a black oval
                     int tileX = horizontalOffset + col * cellWidth;
                     int tileY = verticalOffset + row * cellWidth;
-                    graphics.drawImage(tileImage, tileX, tileY, null);
+                    graphics.drawImage(blackTileImage, tileX, tileY, null);
                 }
             }
         }

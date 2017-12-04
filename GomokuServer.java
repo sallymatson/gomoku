@@ -261,17 +261,15 @@ class clientThread extends Thread {
                   
                     int winState = myGame.checkWinState(detail[1], detail[2], colorNum);
 
-                    if (winState == 0){
-                       // game continues with the new play
-                       outputStream.println(line);
-                       opponent.outputStream.println(line);
-                    }
-                    else if (winState == 1 && detail[0] == 0 || winState == 2 && detail[0] == 1){
+                    // send play to both players
+                    outputStream.println(line);
+                    opponent.outputStream.println(line);
+                    if (winState == 1 && detail[0] == 0 || winState == 2 && detail[0] == 1){
                         // the player who JUST played (and thus sent the gameplay message) has WON
                         outputStream.println(GomokuProtocol.generateWinMessage());
                         opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
                     }
-                    else {
+                    else if (winState != 0) {
                         // the player who JUST played (and thus sent the gameplay message) has LOST
                         outputStream.println(GomokuProtocol.generateLoseMessage());
                         opponent.outputStream.println(GomokuProtocol.generateWinMessage());
