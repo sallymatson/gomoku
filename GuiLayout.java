@@ -226,7 +226,10 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         {
             int row = mouseEvent.getY() / cellWidth;
             int col = mouseEvent.getX() / cellWidth;
-            client.placeGamePiece(row, col);
+
+            if (gameboard[row][col] == 0) {
+                client.placeGamePiece(row, col);
+            }
         }
     }
     public void mouseEntered(MouseEvent MouseEvent) {}
