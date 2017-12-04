@@ -34,10 +34,6 @@ public class GomokuClient implements Runnable {
     private boolean isBlack;
     public int gameboard[][] = new int[15][15];
 
-    public Color getColor() {
-        return (isBlack ? Color.BLACK : Color.WHITE);
-    }
-
     public void setupConnection(String host, int portNumber) {
         layout = new GuiLayout(this);
 
@@ -62,7 +58,7 @@ public class GomokuClient implements Runnable {
         // If all initialized correctly
         if (socket != null && outputStream != null && inputStream != null) {
             // Thread to read from server
-            new Thread(new GomokuClient()).start();
+            new Thread(this).start();
         }
     }
 
@@ -80,6 +76,7 @@ public class GomokuClient implements Runnable {
     /**********************************************************************/
     /* These Functions handle all 4 player use cases */
     public void placeGamePiece(int row, int col) {
+        System.out.println("playing a " + (isBlack ? "black" : "white") + " tile");
         outputStream.println(GomokuProtocol.generatePlayMessage(isBlack, row, col));
     }
 
@@ -117,14 +114,14 @@ public class GomokuClient implements Runnable {
                 System.out.println("Message from server: " + responseLine);
 
                 if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
-                    System.out.println("You have been randomly assigned black.");
                     isBlack = true;
-                    layout.chatMessage("server", responseLine);
+                    layout.startGame(isBlack);
+                    layout.chatMessage("server", "You have been randomly assigned black.");
                 }
                 else if (GomokuProtocol.isSetWhiteColorMessage(responseLine)){
-                    System.out.println("You have been randomly assigned white.");
                     isBlack = false;
-                    layout.chatMessage("server", responseLine);
+                    layout.startGame(isBlack);
+                    layout.chatMessage("server", "You have been randomly assigned white.");
                 }
                 else if (GomokuProtocol.isChangeNameMessage(responseLine)){
                     String[] detail = GomokuProtocol.getChangeNameDetail(responseLine);
@@ -154,9 +151,9 @@ public class GomokuClient implements Runnable {
                     int color = detail[0];
                     int row = detail[1];
                     int col = detail[2];
-                    gameboard[row][col] = color + 1; // probably off by 1
+                    gameboard[row][col] = color; // probably off by 1
                     // send message to gameboard that the opponent has played
-                    layout.placeGamePiece(row, col, color + 1);
+                    layout.placeGamePiece(row, col, color);
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
                     System.out.println("A player has quit the game.");

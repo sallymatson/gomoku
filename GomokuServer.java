@@ -257,6 +257,7 @@ class clientThread extends Thread {
                        outputStream.println(line);
                        opponent.outputStream.println(line);
                     }
+                    // TODO: sometimes sends win/lose messages to wrong player
                     else if (winState == 1 && detail[0] == 0 || winState == 2 && detail[0] == 1){
                         // the player who JUST played (and thus sent the gameplay message) has WON
                         outputStream.println(GomokuProtocol.generateWinMessage());
