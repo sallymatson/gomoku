@@ -90,17 +90,25 @@ class gomokuGame {
 
     gomokuGame(clientThread p1arg, clientThread p2arg){
 
+        // waits for the threads to both get set up:
+        while (!p1arg.gameStarted || !p2arg.gameStarted){
+            continue;
+        }
+
         // assign player threads to the game:
         this.p1 = p1arg;
         this.p2 = p2arg;
 
+
+        System.out.println("p1 myGame: " + p1.myGame);
+        System.out.println("p2 myGame: " + p2.myGame);
         // set both player's game to be this game
         p1.myGame = this;
         p2.myGame = this;
+        System.out.println("p1 myGame: " + p1.myGame);
+        System.out.println("p2 myGame: " + p2.myGame);
 
-        while (!p1.gameStarted || !p2.gameStarted){
-            continue;
-        }
+
         // set the names for both players
         p1.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 1"));
         p2.outputStream.println(GomokuProtocol.generateChangeNameMessage("", "Player 2"));
@@ -197,7 +205,6 @@ class clientThread extends Thread {
     public clientThread opponent;
     public boolean gameStarted = false;
 
-
     public clientThread(Socket clientSocket, clientThread[] clientConns) {
         this.clientSocket = clientSocket;
         this.clientConns = clientConns;
@@ -224,17 +231,15 @@ class clientThread extends Thread {
             gameStarted = true;
 
             while (myGame == null){
-                continue;
+                System.out.println("null");
             }
 
-
             System.out.println("Game has started.");
-
+            System.out.println("my color isssssss: " + colorNum);
 
             while (true) {
                 String line = inputStream.readLine();
                 System.out.println("message from client: " + line);
-
 
                 if (GomokuProtocol.isChatMessage(line)){
                     outputStream.println(line);
@@ -256,17 +261,15 @@ class clientThread extends Thread {
                   
                     int winState = myGame.checkWinState(detail[1], detail[2], colorNum);
 
-                    if (winState == 0){
-                       // game continues with the new play
-                       outputStream.println(line);
-                       opponent.outputStream.println(line);
-                    }
-                    else if (winState == 1 && detail[0] == 0 || winState == 2 && detail[0] == 1){
+                    // send play to both players
+                    outputStream.println(line);
+                    opponent.outputStream.println(line);
+                    if (winState == 1 && detail[0] == 0 || winState == 2 && detail[0] == 1){
                         // the player who JUST played (and thus sent the gameplay message) has WON
                         outputStream.println(GomokuProtocol.generateWinMessage());
                         opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
                     }
-                    else {
+                    else if (winState != 0) {
                         // the player who JUST played (and thus sent the gameplay message) has LOST
                         outputStream.println(GomokuProtocol.generateLoseMessage());
                         opponent.outputStream.println(GomokuProtocol.generateWinMessage());
@@ -291,7 +294,7 @@ class clientThread extends Thread {
                 }
             }
 
-
+            System.out.println("stopped one of the threads");
 
             //free the current thread
             for (int i = 0; i < maxConnections; i++) {

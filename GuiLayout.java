@@ -29,7 +29,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     // panelGomoku components
     private ArrayList<JButton> buttonList = new ArrayList<JButton>();
-    private Image tileImage;
+    private Image whiteTileImage, blackTileImage;
 
     // panelChat components
     private TextArea chatArea;
@@ -42,6 +42,9 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private final int tileWidth = 20;
     private final int horizontalOffset = 9;
     private final int verticalOffset = 72;
+
+    private int gameboard[][] = new int[15][15];
+    private boolean isMyTurn = false;
 
 
     public GuiLayout(GomokuClient client) {
@@ -115,7 +118,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         panelGomoku.add(boardLabel);
 
         try {
-            tileImage = ImageIO.read(new File("tile.png"));
+            whiteTileImage = ImageIO.read(new File("white_tile.png"));
+            blackTileImage = ImageIO.read(new File("black_tile.png"));
         } catch (IOException e) {
             System.out.println("Could not load tile image");
         }
@@ -172,9 +176,21 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     }
 
     // client-accessible methods
-    public void placeGamePiece() {
+    public void startGame(boolean isBlack) {
+        isMyTurn = isBlack;
+    }
+
+    public void placeGamePiece(int row, int col, int val) {
+        gameboard[row][col] = val + 1; // 0 -> 1 for white, 1 -> 2 for black
+        // swap turns
+        isMyTurn = !isMyTurn;
         validate();
         repaint();
+    }
+
+    public void chatMessage(String sender, String message) {
+        chatArea.setText(chatArea.getText() + sender + ": " + message + '\n');
+        chatArea.setCaretPosition(chatArea.getText().length());
     }
 
     // MouseListener methods
@@ -198,14 +214,22 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
             // not a JButton i guess lol
         }
 
+        if (!isMyTurn) {
+            return;
+        }
+
+        // place game piece
         if (mouseEvent.getX() > 0 &&
             mouseEvent.getX() < (boardWidth * cellWidth) &&
             mouseEvent.getY() > 0 &&
             mouseEvent.getY() < (boardWidth * cellWidth))
         {
-            int row = 6; // TODO: do it based on mouseEvent.getY() % cellWidth!
-            int col = 8; // TODO: do it based on mouseEvent.getX() % cellWidth!
-            client.placeGamePiece(row, col);
+            int row = mouseEvent.getY() / cellWidth;
+            int col = mouseEvent.getX() / cellWidth;
+
+            if (gameboard[row][col] == 0) {
+                client.placeGamePiece(row, col);
+            }
         }
     }
     public void mouseEntered(MouseEvent MouseEvent) {}
@@ -251,18 +275,19 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private void drawTiles(Graphics graphics) {
         for (int row = 0; row < boardWidth; row++) {
             for (int col = 0; col < boardWidth; col++) {
-                System.out.println(client.gameboard[row][col]);
-                if (client.gameboard[row][col] == 1) {
+                if (gameboard[row][col] == 1) {
+                    System.out.println("drawing white tile at " + row + ", " + col);
                     // draw a white oval
                     int tileX = horizontalOffset + col * cellWidth;
                     int tileY = verticalOffset + row * cellWidth;
-                    graphics.drawImage(tileImage, tileX, tileY, null);
+                    graphics.drawImage(whiteTileImage, tileX, tileY, null);
                 }
-                else if (client.gameboard[row][col] == 2) {
+                else if (gameboard[row][col] == 2) {
+                    System.out.println("drawing black tile at " + row + ", " + col);
                     // draw a black oval
                     int tileX = horizontalOffset + col * cellWidth;
                     int tileY = verticalOffset + row * cellWidth;
-                    graphics.drawImage(tileImage, tileX, tileY, null);
+                    graphics.drawImage(blackTileImage, tileX, tileY, null);
                 }
             }
         }
