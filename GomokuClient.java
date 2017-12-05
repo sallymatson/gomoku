@@ -34,7 +34,24 @@ public class GomokuClient implements Runnable {
     private boolean isBlack;
     public int gameboard[][] = new int[15][15];
 
-   
+    public void printGameBoard(){
+        for (int i = 0; i<15; i++){
+            for (int j = 0; j<15; j++){
+                System.out.print(gameboard[i][j]);
+            }
+            System.out.println();
+        }
+    }
+
+    public void resetGameBoard(){
+        for (int i = 0; i<15; i++){
+            for (int j = 0; j<15; j++){
+                gameboard[i][j] = 0;
+            }
+        }
+    }
+
+
     public void setupConnection(String host, int portNumber) {
         layout = new GuiLayout(this);
 
@@ -83,8 +100,8 @@ public class GomokuClient implements Runnable {
 
     // this will handle all messages coming from the chat box, including name changes
     public void sendChat(String text) {
-        if (text.startsWith("/nick")){
-            outputStream.println(GomokuProtocol.generateChangeNameMessage(name, text.substring(6)));
+        if (text.startsWith("/nick") && text.trim().length()>5){
+            outputStream.println(GomokuProtocol.generateChangeNameMessage(name, text.substring(5).trim()));
         }
         else {
             outputStream.println(GomokuProtocol.generateChatMessage(name, text));
@@ -154,23 +171,31 @@ public class GomokuClient implements Runnable {
                     layout.placeGamePiece(row, col, color);
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
-                    System.out.println("A player has quit the game.");
-                    layout.chatMessage("Server", responseLine);
+                    layout.chatMessage("Server", "A player has quit the game.");
+                    outputStream.println(GomokuProtocol.generateLoseMessage());
                     closeConnection();
                 }
                 else if (GomokuProtocol.isLoseMessage(responseLine)){
-                    System.out.println("Sorry, you lost :(");
-                    layout.chatMessage("Server", responseLine);
+                    layout.chatMessage("Server", "Sorry, you lost :(");
+                    outputStream.println(GomokuProtocol.generateLoseMessage());
                     closeConnection();
                 }
                 else if (GomokuProtocol.isWinMessage(responseLine)){
-                    System.out.println("Congrats, you won!");
-                    layout.chatMessage("Server", responseLine);
+                    layout.chatMessage("Server", "Congrats, you won!");
                     closeConnection();
                 }
                 else if (GomokuProtocol.isResetMessage(responseLine)){
+                    System.out.println("Reset message coming in from the server.");
                     // send to gui or AI
-                    layout.chatMessage("Server", responseLine);
+                    resetGameBoard();
+                    System.out.println("Printing client's version of gameboard:");
+                    printGameBoard();
+                    layout.resetGameBoard();
+                    System.out.println("Printing layout's version of gameboard:");
+                    layout.printGameBoard();
+                    layout.startGame(isBlack);
+                    layout.repaint();
+                    layout.chatMessage("Server", "A player has reset the game.");
                 }
             }
         } catch (IOException e) {
