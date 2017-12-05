@@ -5,6 +5,49 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+class HumanClient extends GomokuClient {
+
+}
+
+class AIClientOld extends GomokuClient {
+    private GameState currentState = new GameState();
+
+    public void run() {
+        Evaluator moveSearch;
+        int lastMoveCount = 0;
+        gomokuGame game;
+
+        String responseLine;
+
+//        while(currentState.getStatus()) {
+//            //while((responseLine = (AIConnection.getInputReader()).readLine()) != null){
+//            //while(currentState.getStatus() && (responseLine = inputStream.readLine()) != null){
+//            do {
+//                //if(currentState.getMoveCount() == 0) connector.makePlay(currentState.getBoardSize()/2 + " " + currentState.getBoardSize()/2);
+//                lastMoveCount = currentState.getMoveCount();
+//
+//                if () { //currently this client's turn
+//                    //moveSearch = new Evaluator(currentState);
+//                    //Thread searchThread = new Thread(moveSearch, "moveSearch");
+//
+//                    //searchThread.start(); //search for moves
+//
+//                    //choose a random play (for now)
+//                    //currentState.makePlay(moveSearch.getMoves()[rand.nextInt(moveSearch.getMoves().length)]);
+//
+//
+//                    //FIGURE OUT HOW TO SEND SERVER THE MOVE
+//                    //makePlay(moveSearch.getMove());
+//
+//                    placeGamePiece(0, 1);
+//                }
+//            } while(currentState.update().getStatus());
+//        }
+    }
+}
+
+
+
 public class Evaluator implements Runnable {
 
 	
@@ -13,12 +56,6 @@ public class Evaluator implements Runnable {
     private boolean stopSearch = false; //set to true when we run out of time.
     private String lastBestMove;
     private static int maxDepth = 4;
-    
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
 	
 	public void run() {
 	

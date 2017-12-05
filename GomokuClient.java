@@ -9,29 +9,37 @@ import java.io.*;
 class GomokuClientMain {
     public static void main(String[] args) {
 
-        if(args.length < 2) {
-            System.out.println("Please pass host name and port number as command line arguments");
+        if(args.length < 3) {
+            System.out.println("Please pass host name, port number, and AI as command line arguments");
+            System.out.println("Example: localhost 5155 true");
             System.exit(0);
         }
 
         String host = args[0];
         int portNumber = Integer.parseInt(args[1]);
+        boolean isAI = Boolean.parseBoolean(args[2]);
 
-        GomokuClient client = new GomokuClient();
-        client.setupConnection(host, portNumber);
+        GomokuClient client;
+        if (isAI) {
+            client = new AIClient();
+        }
+        else {
+            client = new GomokuClient();
+        }
+        client.setupConnection(host, portNumber, isAI);
     }
 }
 
 public class GomokuClient implements Runnable {
     private static Socket socket = null;
-    private static PrintStream outputStream = null;
-    private static BufferedReader inputStream = null;
+    protected static PrintStream outputStream = null;
+    protected static BufferedReader inputStream = null;
     private static boolean closed = false;
-    private static GuiLayout layout;
+    protected static GuiLayout layout;
     private static boolean hasName = false;
-    private String name = "";
-    private String opponent_name = "";
-    private boolean isBlack;
+    protected String name = "";
+    protected String opponent_name = "";
+    protected boolean isBlack;
     public int gameboard[][] = new int[15][15];
 
     public void printGameBoard(){
@@ -52,8 +60,8 @@ public class GomokuClient implements Runnable {
     }
 
 
-    public void setupConnection(String host, int portNumber) {
-        layout = new GuiLayout(this);
+    public void setupConnection(String host, int portNumber, boolean isAI) {
+        layout = new GuiLayout(this, isAI);
 
         // int portNumber = 5155;
         // String host = "localhost";
@@ -119,6 +127,20 @@ public class GomokuClient implements Runnable {
     }
     /**************************************************************************/
 
+    protected void handlePlayMessage(String responseLine) {
+        int[] detail = GomokuProtocol.getPlayDetail(responseLine);
+        int color = detail[0];
+        int row = detail[1];
+        int col = detail[2];
+        gameboard[row][col] = color; // probably off by 1
+        // send message to gameboard that the opponent has played
+        layout.placeGamePiece(row, col, color);
+    }
+
+    protected void startGame() {
+        // used by the AI
+    }
+
     public void run() {
         /*
          * Keep on reading from the socket to process messages from the
@@ -130,14 +152,15 @@ public class GomokuClient implements Runnable {
             while ((responseLine = inputStream.readLine()) != null) {
 
                 if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
-                	
                     isBlack = true;
                     layout.startGame(isBlack);
+                    startGame();
                     layout.chatMessage("Server", "You have been randomly assigned black.");
                 }
                 else if (GomokuProtocol.isSetWhiteColorMessage(responseLine)){
                     isBlack = false;
                     layout.startGame(isBlack);
+                    startGame();
                     layout.chatMessage("Server", "You have been randomly assigned white.");
                 }
                 else if (GomokuProtocol.isChangeNameMessage(responseLine)){
@@ -162,13 +185,7 @@ public class GomokuClient implements Runnable {
                     layout.chatMessage(sender, msg);
                 }
                 else if (GomokuProtocol.isPlayMessage(responseLine)){
-                    int[] detail = GomokuProtocol.getPlayDetail(responseLine);
-                    int color = detail[0];
-                    int row = detail[1];
-                    int col = detail[2];
-                    gameboard[row][col] = color; // probably off by 1
-                    // send message to gameboard that the opponent has played
-                    layout.placeGamePiece(row, col, color);
+                    handlePlayMessage(responseLine);
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
                     layout.chatMessage("Server", "A player has quit the game.");
@@ -194,6 +211,7 @@ public class GomokuClient implements Runnable {
                     System.out.println("Printing layout's version of gameboard:");
                     layout.printGameBoard();
                     layout.startGame(isBlack);
+                    startGame();
                     layout.repaint();
                     layout.chatMessage("Server", "A player has reset the game.");
                 }
@@ -203,4 +221,3 @@ public class GomokuClient implements Runnable {
         }
     }
 }
-

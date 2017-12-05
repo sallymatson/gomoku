@@ -17,7 +17,6 @@ import javax.swing.border.LineBorder;
 class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseListener {
 
     private GomokuClient client;
-    private AIclient AIclient;
     private JPanel panelControl;
     private JPanel panelGame;
     private JPanel panelGomoku;
@@ -29,7 +28,6 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private JButton buttonReset;
 
     // panelGomoku components
-    private ArrayList<JButton> buttonList = new ArrayList<JButton>();
     private Image whiteTileImage, blackTileImage;
 
     // panelChat components
@@ -45,7 +43,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private final int verticalOffset = 72;
 
     public int gameboard[][] = new int[15][15];
-    private boolean isMyTurn = false;
+    public boolean isMyTurn = false;
+    private boolean isAI = false;
     private boolean justReset = false;
 
     public void printGameBoard(){
@@ -66,8 +65,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         }
     }
 
-
-    public GuiLayout(GomokuClient client) {
+    public GuiLayout(GomokuClient client, boolean isAI) {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new GridBagLayout());
 
@@ -82,25 +80,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         setResizable(false);
 
         this.client = client;
-        this.AIclient = null;
-    }
-    
-    public GuiLayout(AIclient AIclient) {
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        getContentPane().setLayout(new GridBagLayout());
-
-        setUpPanelControl();
-        setUpPanelGame();
-        setUpPanelGomoku();
-        setUpPanelChat();
-
-        setTitle("Gomoku");
-        setSize(new Dimension(800, 600));
-        setVisible(true);
-        setResizable(false);
-
-        this.AIclient = AIclient;
-        this.client = null;
+        this.isAI = isAI;
     }
 
     private void setUpPanelControl() {
@@ -238,28 +218,18 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     // MouseListener methods
     public void mouseClicked(MouseEvent mouseEvent) {
+        if (isAI) {
+            return;
+        }
+
         try {
             JButton button = (JButton) (mouseEvent.getSource());
             if (button == buttonJoinGame) {
-                // attempt to join a new game
+                // TODO: attempt to join a new game
             } else if (button == buttonReset) {
                 client.resetGame();
             } else if (button == buttonGiveUp) {
-            		if(client != null) {
-            			client.quit();
-            		}
-            		//else 
-            			//AIclient.quit();
-            } else if (buttonList.contains(button)) {
-                // TODO: delete this
-                int col = mouseEvent.getX();
-                int row = mouseEvent.getY();
-                
-                if(client != null) {
-        				client.quit();
-        			}
-        			else 
-        				AIclient.placeGamePiece(row, col);
+                client.quit();
             }
         }
         catch (Exception ex) {
@@ -312,10 +282,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private void send(String text) {
         if (!text.isEmpty()) {
             // send the chat message to client to handle
-        		if(client != null)
-        			client.sendChat(text);
-        		else
-        			AIclient.sendChat(text);
+            client.sendChat(text);
             // clear text
             typeArea.setText("");
         }
