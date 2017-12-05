@@ -114,12 +114,12 @@ public class GomokuClient implements Runnable {
                 if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
                     isBlack = true;
                     layout.startGame(isBlack);
-                    layout.chatMessage("server", "You have been randomly assigned black.");
+                    layout.chatMessage("Server", "You have been randomly assigned black.");
                 }
                 else if (GomokuProtocol.isSetWhiteColorMessage(responseLine)){
                     isBlack = false;
                     layout.startGame(isBlack);
-                    layout.chatMessage("server", "You have been randomly assigned white.");
+                    layout.chatMessage("Server", "You have been randomly assigned white.");
                 }
                 else if (GomokuProtocol.isChangeNameMessage(responseLine)){
                     String[] detail = GomokuProtocol.getChangeNameDetail(responseLine);
@@ -132,9 +132,8 @@ public class GomokuClient implements Runnable {
                     } else if (detail[0].equals(opponent_name)){
                         opponent_name = detail[1];
                     }
-                    // TODO: alert players of the name change
                     if (!detail[0].equals("")) {
-                        layout.chatMessage("server", detail[0] + " has changed name to " + detail[1]);
+                        layout.chatMessage("Server", detail[0] + " has changed name to " + detail[1]);
                     }
                 }
                 else if (GomokuProtocol.isChatMessage(responseLine)){
@@ -154,22 +153,22 @@ public class GomokuClient implements Runnable {
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
                     System.out.println("A player has quit the game.");
-                    layout.chatMessage("server", responseLine);
+                    layout.chatMessage("Server", responseLine);
                     closeConnection();
                 }
                 else if (GomokuProtocol.isLoseMessage(responseLine)){
                     System.out.println("Sorry, you lost :(");
-                    layout.chatMessage("server", responseLine);
+                    layout.chatMessage("Server", responseLine);
                     closeConnection();
                 }
                 else if (GomokuProtocol.isWinMessage(responseLine)){
                     System.out.println("Congrats, you won!");
-                    layout.chatMessage("server", responseLine);
+                    layout.chatMessage("Server", responseLine);
                     closeConnection();
                 }
                 else if (GomokuProtocol.isResetMessage(responseLine)){
                     // send to gui or AI
-                    layout.chatMessage("server", responseLine);
+                    layout.chatMessage("Server", responseLine);
                 }
             }
         } catch (IOException e) {
