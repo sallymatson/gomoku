@@ -13,12 +13,6 @@ public class Evaluator implements Runnable {
     private boolean stopSearch = false; //set to true when we run out of time.
     private String lastBestMove;
     private static int maxDepth = 4;
-    
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
 	
 	public void run() {
 	

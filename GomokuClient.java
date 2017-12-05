@@ -9,29 +9,37 @@ import java.io.*;
 class GomokuClientMain {
     public static void main(String[] args) {
 
-        if(args.length < 2) {
-            System.out.println("Please pass host name and port number as command line arguments");
+        if(args.length < 3) {
+            System.out.println("Please pass host name, port number, and AI as command line arguments");
+            System.out.println("Example: localhost 5155 true");
             System.exit(0);
         }
 
         String host = args[0];
         int portNumber = Integer.parseInt(args[1]);
+        boolean ai = Boolean.parseBoolean(args[2]);
 
-        GomokuClient client = new GomokuClient();
+        GomokuClient client;
+        if (ai) {
+            client = new GomokuClient();
+        }
+        else {
+            client = new AIClient();
+        }
         client.setupConnection(host, portNumber);
     }
 }
 
 public class GomokuClient implements Runnable {
     private static Socket socket = null;
-    private static PrintStream outputStream = null;
+    protected static PrintStream outputStream = null;
     private static BufferedReader inputStream = null;
     private static boolean closed = false;
-    private static GuiLayout layout;
+    protected static GuiLayout layout;
     private static boolean hasName = false;
     private String name = "";
     private String opponent_name = "";
-    private boolean isBlack;
+    protected boolean isBlack;
     public int gameboard[][] = new int[15][15];
 
    
@@ -179,3 +187,43 @@ public class GomokuClient implements Runnable {
     }
 }
 
+class HumanClient extends GomokuClient {
+
+}
+
+class AIClient extends GomokuClient {
+    private GameState currentState = new GameState();
+
+    public void run() {
+        Evaluator moveSearch;
+        int lastMoveCount = 0;
+        gomokuGame game;
+
+        String responseLine;
+
+//        while(currentState.getStatus()) {
+//            //while((responseLine = (AIConnection.getInputReader()).readLine()) != null){
+//            //while(currentState.getStatus() && (responseLine = inputStream.readLine()) != null){
+//            do {
+//                //if(currentState.getMoveCount() == 0) connector.makePlay(currentState.getBoardSize()/2 + " " + currentState.getBoardSize()/2);
+//                lastMoveCount = currentState.getMoveCount();
+//
+//                if () { //currently this client's turn
+//                    //moveSearch = new Evaluator(currentState);
+//                    //Thread searchThread = new Thread(moveSearch, "moveSearch");
+//
+//                    //searchThread.start(); //search for moves
+//
+//                    //choose a random play (for now)
+//                    //currentState.makePlay(moveSearch.getMoves()[rand.nextInt(moveSearch.getMoves().length)]);
+//
+//
+//                    //FIGURE OUT HOW TO SEND SERVER THE MOVE
+//                    //makePlay(moveSearch.getMove());
+//
+//                    placeGamePiece(0, 1);
+//                }
+//            } while(currentState.update().getStatus());
+//        }
+    }
+}
