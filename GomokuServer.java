@@ -9,7 +9,7 @@
 
 package gomoku;
 
-import sun.font.TrueTypeFont;
+//import sun.font.TrueTypeFont;
 
 import java.net.*;
 import java.io.*;
