@@ -17,28 +17,28 @@ class GomokuClientMain {
 
         String host = args[0];
         int portNumber = Integer.parseInt(args[1]);
-        boolean ai = Boolean.parseBoolean(args[2]);
+        boolean isAI = Boolean.parseBoolean(args[2]);
 
         GomokuClient client;
-        if (ai) {
-            client = new GomokuClient();
-        }
-        else {
+        if (isAI) {
             client = new AIClient();
         }
-        client.setupConnection(host, portNumber);
+        else {
+            client = new GomokuClient();
+        }
+        client.setupConnection(host, portNumber, isAI);
     }
 }
 
 public class GomokuClient implements Runnable {
     private static Socket socket = null;
     protected static PrintStream outputStream = null;
-    private static BufferedReader inputStream = null;
+    protected static BufferedReader inputStream = null;
     private static boolean closed = false;
     protected static GuiLayout layout;
     private static boolean hasName = false;
-    private String name = "";
-    private String opponent_name = "";
+    protected String name = "";
+    protected String opponent_name = "";
     protected boolean isBlack;
     public int gameboard[][] = new int[15][15];
 
@@ -60,8 +60,8 @@ public class GomokuClient implements Runnable {
     }
 
 
-    public void setupConnection(String host, int portNumber) {
-        layout = new GuiLayout(this);
+    public void setupConnection(String host, int portNumber, boolean isAI) {
+        layout = new GuiLayout(this, isAI);
 
         // int portNumber = 5155;
         // String host = "localhost";
@@ -127,6 +127,20 @@ public class GomokuClient implements Runnable {
     }
     /**************************************************************************/
 
+    protected void handlePlayMessage(String responseLine) {
+        int[] detail = GomokuProtocol.getPlayDetail(responseLine);
+        int color = detail[0];
+        int row = detail[1];
+        int col = detail[2];
+        gameboard[row][col] = color; // probably off by 1
+        // send message to gameboard that the opponent has played
+        layout.placeGamePiece(row, col, color);
+    }
+
+    protected void startGame() {
+        // used by the AI
+    }
+
     public void run() {
         /*
          * Keep on reading from the socket to process messages from the
@@ -138,14 +152,15 @@ public class GomokuClient implements Runnable {
             while ((responseLine = inputStream.readLine()) != null) {
 
                 if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
-                	
                     isBlack = true;
                     layout.startGame(isBlack);
+                    startGame();
                     layout.chatMessage("Server", "You have been randomly assigned black.");
                 }
                 else if (GomokuProtocol.isSetWhiteColorMessage(responseLine)){
                     isBlack = false;
                     layout.startGame(isBlack);
+                    startGame();
                     layout.chatMessage("Server", "You have been randomly assigned white.");
                 }
                 else if (GomokuProtocol.isChangeNameMessage(responseLine)){
@@ -170,13 +185,7 @@ public class GomokuClient implements Runnable {
                     layout.chatMessage(sender, msg);
                 }
                 else if (GomokuProtocol.isPlayMessage(responseLine)){
-                    int[] detail = GomokuProtocol.getPlayDetail(responseLine);
-                    int color = detail[0];
-                    int row = detail[1];
-                    int col = detail[2];
-                    gameboard[row][col] = color; // probably off by 1
-                    // send message to gameboard that the opponent has played
-                    layout.placeGamePiece(row, col, color);
+                    handlePlayMessage(responseLine);
                 }
                 else if (GomokuProtocol.isGiveupMessage(responseLine)){
                     layout.chatMessage("Server", "A player has quit the game.");
@@ -202,6 +211,7 @@ public class GomokuClient implements Runnable {
                     System.out.println("Printing layout's version of gameboard:");
                     layout.printGameBoard();
                     layout.startGame(isBlack);
+                    startGame();
                     layout.repaint();
                     layout.chatMessage("Server", "A player has reset the game.");
                 }
@@ -209,46 +219,5 @@ public class GomokuClient implements Runnable {
         } catch (IOException e) {
             System.err.println("IOException:  " + e);
         }
-    }
-}
-
-class HumanClient extends GomokuClient {
-
-}
-
-class AIClient extends GomokuClient {
-    private GameState currentState = new GameState();
-
-    public void run() {
-        Evaluator moveSearch;
-        int lastMoveCount = 0;
-        gomokuGame game;
-
-        String responseLine;
-
-//        while(currentState.getStatus()) {
-//            //while((responseLine = (AIConnection.getInputReader()).readLine()) != null){
-//            //while(currentState.getStatus() && (responseLine = inputStream.readLine()) != null){
-//            do {
-//                //if(currentState.getMoveCount() == 0) connector.makePlay(currentState.getBoardSize()/2 + " " + currentState.getBoardSize()/2);
-//                lastMoveCount = currentState.getMoveCount();
-//
-//                if () { //currently this client's turn
-//                    //moveSearch = new Evaluator(currentState);
-//                    //Thread searchThread = new Thread(moveSearch, "moveSearch");
-//
-//                    //searchThread.start(); //search for moves
-//
-//                    //choose a random play (for now)
-//                    //currentState.makePlay(moveSearch.getMoves()[rand.nextInt(moveSearch.getMoves().length)]);
-//
-//
-//                    //FIGURE OUT HOW TO SEND SERVER THE MOVE
-//                    //makePlay(moveSearch.getMove());
-//
-//                    placeGamePiece(0, 1);
-//                }
-//            } while(currentState.update().getStatus());
-//        }
     }
 }

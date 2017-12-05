@@ -43,7 +43,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private final int verticalOffset = 72;
 
     public int gameboard[][] = new int[15][15];
-    private boolean isMyTurn = false;
+    public boolean isMyTurn = false;
+    private boolean isAI = false;
     private boolean justReset = false;
 
     public void printGameBoard(){
@@ -64,8 +65,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         }
     }
 
-
-    public GuiLayout(GomokuClient client) {
+    public GuiLayout(GomokuClient client, boolean isAI) {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new GridBagLayout());
 
@@ -80,6 +80,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         setResizable(false);
 
         this.client = client;
+        this.isAI = isAI;
     }
 
     private void setUpPanelControl() {
@@ -217,14 +218,18 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     // MouseListener methods
     public void mouseClicked(MouseEvent mouseEvent) {
+        if (isAI) {
+            return;
+        }
+
         try {
             JButton button = (JButton) (mouseEvent.getSource());
             if (button == buttonJoinGame) {
-                // attempt to join a new game
+                // TODO: attempt to join a new game
             } else if (button == buttonReset) {
                 client.resetGame();
             } else if (button == buttonGiveUp) {
-                // quit the game
+                client.quit();
             }
         }
         catch (Exception ex) {
