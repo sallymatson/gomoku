@@ -43,8 +43,27 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private final int horizontalOffset = 9;
     private final int verticalOffset = 72;
 
-    private int gameboard[][] = new int[15][15];
+    public int gameboard[][] = new int[15][15];
     private boolean isMyTurn = false;
+    private boolean justReset = false;
+
+    public void printGameBoard(){
+        for (int i = 0; i<15; i++){
+            for (int j = 0; j<15; j++){
+                System.out.print(gameboard[i][j]);
+            }
+            System.out.println();
+        }
+    }
+
+    public void resetGameBoard(){
+        justReset = true;
+        for (int i = 0; i<15; i++){
+            for (int j = 0; j<15; j++){
+                gameboard[i][j] = 0;
+            }
+        }
+    }
 
 
     public GuiLayout(GomokuClient client) {
@@ -181,11 +200,15 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     }
 
     public void placeGamePiece(int row, int col, int val) {
-        gameboard[row][col] = val + 1; // 0 -> 1 for white, 1 -> 2 for black
-        // swap turns
-        isMyTurn = !isMyTurn;
-        validate();
-        repaint();
+        if (!justReset) {
+            gameboard[row][col] = val + 1; // 0 -> 1 for white, 1 -> 2 for black
+            // swap turns
+            isMyTurn = !isMyTurn;
+            validate();
+            repaint();
+        } else {
+            justReset = false;
+        }
     }
 
     public void chatMessage(String sender, String message) {
@@ -200,7 +223,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
             if (button == buttonJoinGame) {
                 // attempt to join a new game
             } else if (button == buttonReset) {
-                // reset the game
+                client.resetGame();
             } else if (button == buttonGiveUp) {
                 client.quit();
             } else if (buttonList.contains(button)) {
