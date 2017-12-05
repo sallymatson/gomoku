@@ -50,8 +50,18 @@ public class GomokuProtocol {
     }
     
     public static int[] getPlayDetail(String msg) {
+
         if (isPlayMessage(msg)) {
             String[] tokens = msg.split(SEPARATOR);
+			System.out.println("here");
+    			System.out.println(tokens[0]);
+    			System.out.println("a");
+
+    			System.out.println(tokens[1]);
+    			System.out.println(tokens[2]);
+    			System.out.println(tokens[3]);
+
+
             if (tokens.length >= 5) {
                 return new int[]{
                         Integer.parseInt(tokens[2]), 

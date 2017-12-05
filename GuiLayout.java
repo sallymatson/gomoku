@@ -17,6 +17,7 @@ import javax.swing.border.LineBorder;
 class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseListener {
 
     private GomokuClient client;
+    private AIclient AIclient;
     private JPanel panelControl;
     private JPanel panelGame;
     private JPanel panelGomoku;
@@ -62,6 +63,25 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         setResizable(false);
 
         this.client = client;
+        this.AIclient = null;
+    }
+    
+    public GuiLayout(AIclient AIclient) {
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        getContentPane().setLayout(new GridBagLayout());
+
+        setUpPanelControl();
+        setUpPanelGame();
+        setUpPanelGomoku();
+        setUpPanelChat();
+
+        setTitle("Gomoku");
+        setSize(new Dimension(800, 600));
+        setVisible(true);
+        setResizable(false);
+
+        this.AIclient = AIclient;
+        this.client = null;
     }
 
     private void setUpPanelControl() {
@@ -202,12 +222,21 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
             } else if (button == buttonReset) {
                 // reset the game
             } else if (button == buttonGiveUp) {
-                client.quit();
+            		if(client != null) {
+            			client.quit();
+            		}
+            		//else 
+            			//AIclient.quit();
             } else if (buttonList.contains(button)) {
                 // TODO: delete this
                 int col = mouseEvent.getX();
                 int row = mouseEvent.getY();
-                client.placeGamePiece(row, col);
+                
+                if(client != null) {
+        				client.quit();
+        			}
+        			else 
+        				AIclient.placeGamePiece(row, col);
             }
         }
         catch (Exception ex) {
@@ -260,7 +289,10 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private void send(String text) {
         if (!text.isEmpty()) {
             // send the chat message to client to handle
-            client.sendChat(text);
+        		if(client != null)
+        			client.sendChat(text);
+        		else
+        			AIclient.sendChat(text);
             // clear text
             typeArea.setText("");
         }
