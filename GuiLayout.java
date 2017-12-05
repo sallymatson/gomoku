@@ -23,7 +23,6 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private JPanel panelChat;
 
     // panelControl components
-    private JButton buttonJoinGame;
     private JButton buttonGiveUp;
     private JButton buttonReset;
 
@@ -95,9 +94,6 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         add(panelControl, constraints);
         panelControl.setLayout(new FlowLayout());
 
-        buttonJoinGame = new JButton("Join Game");
-        buttonJoinGame.addMouseListener(this);
-        panelControl.add(buttonJoinGame);
 
         buttonGiveUp = new JButton("Give Up");
         buttonGiveUp.addMouseListener(this);
@@ -224,9 +220,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
         try {
             JButton button = (JButton) (mouseEvent.getSource());
-            if (button == buttonJoinGame) {
-                // TODO: attempt to join a new game
-            } else if (button == buttonReset) {
+            if (button == buttonReset) {
                 client.resetGame();
             } else if (button == buttonGiveUp) {
                 client.quit();
