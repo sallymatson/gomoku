@@ -34,6 +34,7 @@ public class GomokuClient implements Runnable {
     private boolean isBlack;
     public int gameboard[][] = new int[15][15];
 
+   
     public void setupConnection(String host, int portNumber) {
         layout = new GuiLayout(this);
 
@@ -112,6 +113,7 @@ public class GomokuClient implements Runnable {
             while ((responseLine = inputStream.readLine()) != null) {
 
                 if (GomokuProtocol.isSetBlackColorMessage(responseLine)){
+                	
                     isBlack = true;
                     layout.startGame(isBlack);
                     layout.chatMessage("Server", "You have been randomly assigned black.");
