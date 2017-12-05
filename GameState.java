@@ -29,23 +29,32 @@ public class GameState {
     public static final double THREES_POINTS = 100;
     public static final double TWOS_POINTS = 5;
     public static final double ONES_POINTS = 1;
+	private static GuiLayout layout;
+	
+
     
     private boolean isGame;
     private int boardSize = 15;
     private static boolean DEBUG = false;
     private static int moveCount;
+    private AIConnection connector;
+
+
 	
     /**
      * Instantiate a real GameState
      */
+    public GameState() {
+        connector = AIConnection.getInstance();
+        update();
+    }
     
     
-    
-    public void setupConnection(String host, int portNumber) {
-        //layout = new GuiLayout(this);
+    public void setupConnection(String host, int portNumber, AIclient ai) {
+        layout = new GuiLayout(ai);
         // Open a socket on a given host and port. Open input and output streams.
 
-
+    		int count = 0;
         try {
             // open socket on the host and port,
             // inputStream to receive messages from server,
@@ -53,6 +62,8 @@ public class GameState {
             socket = new Socket(host, portNumber);
             inputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             outputStream = new PrintStream(socket.getOutputStream());
+    			System.out.println("connected in game state");
+
         } catch (UnknownHostException e) {
             System.err.println("Unknown host: " + host);
         } catch (IOException e) {
@@ -62,7 +73,7 @@ public class GameState {
         // If all initialized correctly
         if (socket != null && outputStream != null && inputStream != null) {
             // Thread to read from server
-            new Thread(new AIclient()).start();
+            //new Thread(new AIclient()).start();
         }
     }
     
@@ -73,22 +84,26 @@ public class GameState {
     }
 
     
-    public GameState() {
+    public GameState(AIclient ai) {
         //connector = GomokuConnector.getInstance();
-        int portNumber = 5000;
-        String host = "localhost";
-    		setupConnection(host, portNumber);
-        update();
+    		System.out.println("here");
+         connector = AIConnection.getInstance();
+
+       update();
+        
+        System.out.println("all done in fgame state contructos1111");
     }
     
-    public void setGameState() {
+    public void setGameState(BufferedReader input) {
     		
         String responseLine;
 
     	  try {
               // gets information from the server:
-              while ((responseLine = inputStream.readLine()) != null) {
-  		
+    		  	
+              while (input.ready()){
+
+            	  	responseLine = (AIConnection.getInputReader()).readLine();
                   System.out.println("Message from server: " + responseLine);
                   
                  isGame = true;
@@ -96,11 +111,17 @@ public class GameState {
                       System.out.println("You have been randomly assigned black.");
                       isBlack = true;
                       player = 'b';
+                      AIConnection.layout.startGame(isBlack);
+					AIConnection.layout.chatMessage("server", "You have been randomly assigned black.");
+					
                   }
                   else if (GomokuProtocol.isSetWhiteColorMessage(responseLine)){
                       System.out.println("You have been randomly assigned white.");
                       isBlack = false;
                       player = 'w';   
+                      AIConnection.layout.startGame(isBlack);
+                      AIConnection.layout.chatMessage("server", "You have been randomly assigned white.");
+
                   }
 				
                   else if (GomokuProtocol.isChangeNameMessage(responseLine)){
@@ -117,49 +138,68 @@ public class GameState {
                       System.out.println("Name: " + name);
                       System.out.println("Opponent Name: " + opponent_name);
                       // TODO: alert players of the name change
+                      AIConnection.layout.chatMessage("server", responseLine);
+
+
                   }
                   else if (GomokuProtocol.isPlayMessage(responseLine)){
-                      int[] detail = GomokuProtocol.getPlayDetail(responseLine);
-                      if (detail[0] == 1 && isBlack || detail[0] == 0 && !isBlack){
-                          // this player's move is coming back. Probably don't need to do anything?
-                      } else {
-                          int row = detail[1];
-                          int col = detail[2];
-                          // send message to gameboard that the opponent has played
-                      }
-                  }
+                	  		
+						int[] detail = GomokuProtocol.getPlayDetail(responseLine);
+						int color = detail[0];
+						int row = detail[1];
+						int col = detail[2];
+						board[row][col] = color; // probably off by 1
+					// send message to gameboard that the opponent has played
+						AIConnection.layout.placeGamePiece(row, col, color);
+	                    System.out.println("eqeqeaeqweqwqkejlehjakj");
+
+					}
                   else if (GomokuProtocol.isChatMessage(responseLine)){
                       String[] detail = GomokuProtocol.getChatDetail(responseLine);
                       String sender = detail[0];
                       String msg = detail[1];
                       // TODO: send this to gui however that's going to happen
+                      AIConnection.layout.chatMessage(sender, msg);
+
                   }
                   else if (GomokuProtocol.isGiveupMessage(responseLine)){
                       System.out.println("A player has quit the game.");
                       isGame = false;
+                      AIConnection.layout.chatMessage("server", responseLine);
+
                       closeConnection();
+
                   }
                   else if (GomokuProtocol.isLoseMessage(responseLine)){
                       System.out.println("Sorry, you lost :(");
+                      AIConnection.layout.chatMessage("server", responseLine);
+
                       isGame = false;
                       closeConnection();
+
                   }
                   else if (GomokuProtocol.isWinMessage(responseLine)){
                       System.out.println("Congrats, you won!");
+                      AIConnection.layout.chatMessage("server", responseLine);
                       isGame = false;
                       closeConnection();
+
                   }
                   else if (GomokuProtocol.isResetMessage(responseLine)){
                       // send to gui or AI
-                  }
-                  
-                  
+                	  AIConnection.layout.chatMessage("server", responseLine);
+                      System.out.println(9);
+
+                  }         
               }
+              
+
               
           }catch (IOException e) {
               System.err.println("IOException:  " + e);
           }
     
+
     }
     
     public void setPlayer(char player) {
@@ -182,7 +222,16 @@ public class GameState {
    }
 
 
-    
+   public static void increaseCount(){
+       moveCount++;
+   }
+
+   public void setMoveCount(int moveCount) {
+       GameState.moveCount = moveCount;
+   }
+   
+   
+   
     private void closeConnection() {
         try {
             // Close streams that were opened
@@ -195,8 +244,8 @@ public class GameState {
     }
     
     public GameState update(){
-    	
-    		setGameState();
+    		setGameState(AIConnection.getInputReader());
+    		System.out.println("in update func");
     		return this;
     		
     }
