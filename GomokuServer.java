@@ -121,6 +121,8 @@ class gomokuGame {
         p1.opponent = p2;
         p2.opponent = p1;
 
+        p1.outputStream.println(GomokuProtocol.generateChatMessage("Server", "Welcome, Player 1!"));
+        p2.outputStream.println(GomokuProtocol.generateChatMessage("Sender", "Welcome, Player 2!"));
         // randomly assign one black and one white
         int random = (int) (Math.random() * 2);
         if (random == 0) {
@@ -132,7 +134,23 @@ class gomokuGame {
             p1.outputStream.println(GomokuProtocol.generateSetWhiteColorMessage());
             p2.colorNum = 2;
         }
+    }
 
+    public void printGameBoard(){
+        for (int i = 0; i<15; i++){
+            for (int j = 0; j<15; j++){
+                System.out.print(gameboard[i][j]);
+            }
+            System.out.println();
+        }
+    }
+
+    public void resetGameBoard(){
+        for (int i = 0; i<15; i++){
+            for (int j = 0; j<15; j++){
+                gameboard[i][j] = 0;
+            }
+        }
     }
 
     public int checkWinState(int row, int col, int colorNum){
@@ -167,7 +185,7 @@ class gomokuGame {
             }
         }
         StringBuilder negDiagonal = new StringBuilder();
-        if (row>col && row < 11){
+        if (row>col){
             int rowStart = row-col;
             int colStart = 0;
             while (rowStart <= 14){
@@ -176,7 +194,7 @@ class gomokuGame {
                 colStart++;
             }
         }
-        else if (col>=row && col < 11){
+        else if (col>=row){
             int rowStart = 0;
             int colStart = col-row;
             while (colStart <= 14){
@@ -185,6 +203,11 @@ class gomokuGame {
                 colStart++;
             }
         }
+        //System.out.println("Check row: " + checkRow.toString());
+        //System.out.println("Check col: " + checkCol.toString());
+        //System.out.println("Check posDiag: " + posDiagonal.toString());
+        //System.out.println("Check negDiag: " + negDiagonal.toString());
+
         // check if any of the win conditions have been found:
         if (checkRow.toString().contains(winstate) || checkCol.toString().contains(winstate) ||
                 posDiagonal.toString().contains(winstate) || negDiagonal.toString().contains(winstate)) {
@@ -211,15 +234,6 @@ class clientThread extends Thread {
         maxConnections = clientConns.length;
     }
 
-    private boolean nameIsUnique(String name){
-        for (int i = 0; i < maxConnections; i++){
-            if (clientConns[i] != null && clientConns[i].getName().equals(name)){
-                return false;
-            }
-        }
-        return true;
-    }
-
     public void run() {
         int maxConnections = this.maxConnections;
         clientThread[] clientConns = this.clientConns;
@@ -230,16 +244,22 @@ class clientThread extends Thread {
             outputStream = new PrintStream(clientSocket.getOutputStream());
             gameStarted = true;
 
+
+            // TODO: make this more formal
             while (myGame == null){
-                System.out.println("null");
+                System.out.print("");
             }
 
             System.out.println("Game has started.");
-            System.out.println("my color isssssss: " + colorNum);
 
             while (true) {
                 String line = inputStream.readLine();
                 System.out.println("message from client: " + line);
+
+                if (line == null){
+                    opponent.outputStream.println(GomokuProtocol.generateGiveupMessage());
+                    break;
+                }
 
                 if (GomokuProtocol.isChatMessage(line)){
                     outputStream.println(line);
@@ -247,10 +267,13 @@ class clientThread extends Thread {
                 }
                 else if (GomokuProtocol.isChangeNameMessage(line)){
                     String[] detail = GomokuProtocol.getChangeNameDetail(line);
-                    if (!detail[1].equals(opponent.getName())){
+                    if (!detail[1].equals(opponent.getName()) && !detail[1].equals("")){
                         this.setName(detail[1]);
                         outputStream.println(line);
                         opponent.outputStream.println(line);
+                    }
+                    else {
+                        outputStream.println(GomokuProtocol.generateChatMessage("Server", "Nickname invalid or already taken."));
                     }
                 }
 
@@ -268,33 +291,35 @@ class clientThread extends Thread {
                         // the player who JUST played (and thus sent the gameplay message) has WON
                         outputStream.println(GomokuProtocol.generateWinMessage());
                         opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
+                        break;
                     }
-                    else if (winState != 0) {
+                    else if (winState != 0) { // will this ever happen............
                         // the player who JUST played (and thus sent the gameplay message) has LOST
                         outputStream.println(GomokuProtocol.generateLoseMessage());
                         opponent.outputStream.println(GomokuProtocol.generateWinMessage());
+                        break;
                     }
+                }
+                else if (GomokuProtocol.isLoseMessage(line)){
+                    System.out.println("Lose message from client.");
+                    break;
                 }
 
                 else if (GomokuProtocol.isResetMessage(line)){
-                    for (int i = 0; i<maxConnections; i++){
-                        if (clientConns[i] != null){
-                            clientConns[i].outputStream.println(GomokuProtocol.generateResetMessage());
-                        }
-                    }
+                    System.out.println("reset message!");
+                    myGame.resetGameBoard();
+                    myGame.printGameBoard();
+                    outputStream.println(GomokuProtocol.generateResetMessage());
+                    opponent.outputStream.println(GomokuProtocol.generateResetMessage());
                 }
 
                 else if (GomokuProtocol.isGiveupMessage(line)){
-                    for (int i = 0; i<maxConnections; i++){
-                        if (clientConns[i] != null){
-                            clientConns[i].outputStream.println(GomokuProtocol.generateGiveupMessage());
-                        }
-                    }
-                    break;
+                    outputStream.println(GomokuProtocol.generateGiveupMessage());
+                    opponent.outputStream.println(GomokuProtocol.generateGiveupMessage());
                 }
             }
 
-            System.out.println("stopped one of the threads");
+            System.out.println("stopped thread named " + getName());
 
             //free the current thread
             for (int i = 0; i < maxConnections; i++) {
