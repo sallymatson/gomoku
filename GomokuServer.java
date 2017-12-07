@@ -160,22 +160,11 @@ class gomokuGame {
     
     public boolean checkDrawState(){            
             
-            if(moveCount >= 225)
+            if(moveCount < 225)
                 return false;
             else
                 return true;
-        
-//          less optimal, search gameboard each time for empty spaces           
-//          for(int i = 0; i < 15; i++) {
-//              for(int j = 0; j < 15; j++) {
-//                  
-//                  if(gameboard[i][j] == 0){
-//                      return false;
-//                  }
-//              }
-//          }
-//          
-//      return true;
+
     }
 
     public int checkWinState(int row, int col, int colorNum){
@@ -326,10 +315,13 @@ class clientThread extends Thread {
                     else if(winState == 0) {
                             boolean isDraw = myGame.checkDrawState();
                             if(isDraw) {
-                                //send lose message to both players, end game.
-                                 outputStream.println(GomokuProtocol.generateLoseMessage());
-                              opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
-                              break;
+                                // send draw message to both
+                                System.out.println("Are you fucking kidding me.");
+                                outputStream.println(GomokuProtocol.generateChatMessage("Server", "Tie game!"));
+                                opponent.outputStream.println(GomokuProtocol.generateChatMessage("Server", "Tie game!"));
+                                outputStream.println(GomokuProtocol.generateLoseMessage());
+                                opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
+                                break;
                             }
                     }
                     
