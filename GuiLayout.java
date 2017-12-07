@@ -15,33 +15,80 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 
-class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseListener {
-
-    private GomokuClient client;
-    private JPanel panelControl;
-    private JPanel panelGame;
-    private JPanel panelGomoku;
-    private JPanel panelChat;
-
-    // panelControl components
-    private JButton buttonGiveUp;
-    private JButton buttonReset;
-
-    // panelGomoku components
+class GomokuJPanel extends JPanel {
     private Image whiteTileImage, blackTileImage;
     private BufferedImage bufferImage;
-
-    // panelChat components
-    private TextArea chatArea;
-    private TextArea typeArea;
-    private JButton sendButton;
+    private int gameboard[][] = new int[15][15];
 
     // tile placement constants
     private final int boardWidth = 15;
     private final int cellWidth = 35;
     private final int tileWidth = 20;
     private final int horizontalOffset = 9;
-    private final int verticalOffset = 72;
+    private final int verticalOffset = 12;
+
+    public GomokuJPanel(int[][] gameboard) {
+        this.gameboard = gameboard;
+        bufferImage = new BufferedImage(800, 600, BufferedImage.TYPE_INT_RGB);
+
+        try {
+            whiteTileImage = ImageIO.read(new File("white_tile.png"));
+            blackTileImage = ImageIO.read(new File("black_tile.png"));
+        } catch (IOException e) {
+            System.out.println("Could not load tile image");
+        }
+    }
+
+    @Override
+    public void paint(Graphics graphics) {
+        Graphics graphicsBuffer = bufferImage.createGraphics();
+        super.paint(graphicsBuffer); // call to JFrame paint()
+        drawTiles(graphicsBuffer);
+        graphics.drawImage(bufferImage, 0, 0, null);
+    }
+
+    private void drawTiles(Graphics graphics) {
+        for (int row = 0; row < boardWidth; row++) {
+            for (int col = 0; col < boardWidth; col++) {
+                if (gameboard[row][col] == 1) {
+                    System.out.println("drawing white tile at " + row + ", " + col);
+                    // draw a white oval
+                    int tileX = horizontalOffset + col * cellWidth;
+                    int tileY = verticalOffset + row * cellWidth;
+                    graphics.drawImage(whiteTileImage, tileX, tileY, null);
+                }
+                else if (gameboard[row][col] == 2) {
+                    System.out.println("drawing black tile at " + row + ", " + col);
+                    // draw a black oval
+                    int tileX = horizontalOffset + col * cellWidth;
+                    int tileY = verticalOffset + row * cellWidth;
+                    graphics.drawImage(blackTileImage, tileX, tileY, null);
+                }
+            }
+        }
+    }
+}
+
+class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseListener {
+
+    private GomokuClient client;
+    private JPanel panelControl;
+    private JPanel panelGame;
+    private GomokuJPanel panelGomoku;
+    private JPanel panelChat;
+
+    // panelControl components
+    private JButton buttonGiveUp;
+    private JButton buttonReset;
+
+    // panelGomoku constants
+    private final int boardWidth = 15;
+    private final int cellWidth = 35;
+
+    // panelChat components
+    private TextArea chatArea;
+    private TextArea typeArea;
+    private JButton sendButton;
 
     public int gameboard[][] = new int[15][15];
     public boolean isMyTurn = false;
@@ -79,8 +126,6 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         setSize(new Dimension(800, 600));
         setVisible(true);
         setResizable(false);
-
-        bufferImage = new BufferedImage(800, 600, BufferedImage.TYPE_INT_RGB);
 
         this.client = client;
         this.isAI = isAI;
@@ -122,7 +167,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     }
 
     private void setUpPanelGomoku() {
-        panelGomoku = new JPanel();
+        panelGomoku = new GomokuJPanel(gameboard);
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.fill = GridBagConstraints.BOTH;
         constraints.weightx = 0;
@@ -135,13 +180,6 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         JLabel boardLabel = new JLabel("", boardImage, JLabel.HORIZONTAL);
         boardLabel.addMouseListener(this);
         panelGomoku.add(boardLabel);
-
-        try {
-            whiteTileImage = ImageIO.read(new File("white_tile.png"));
-            blackTileImage = ImageIO.read(new File("black_tile.png"));
-        } catch (IOException e) {
-            System.out.println("Could not load tile image");
-        }
     }
 
     private void setUpPanelChat() {
@@ -283,35 +321,6 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
             client.sendChat(text);
             // clear text
             typeArea.setText("");
-        }
-    }
-
-    @Override
-    public void paint(Graphics graphics) {
-        Graphics graphicsBuffer = bufferImage.createGraphics();
-        super.paint(graphicsBuffer); // call to JFrame paint()
-        drawTiles(graphicsBuffer);
-        graphics.drawImage(bufferImage, 0, 0, null);
-    }
-
-    private void drawTiles(Graphics graphics) {
-        for (int row = 0; row < boardWidth; row++) {
-            for (int col = 0; col < boardWidth; col++) {
-                if (gameboard[row][col] == 1) {
-                    System.out.println("drawing white tile at " + row + ", " + col);
-                    // draw a white oval
-                    int tileX = horizontalOffset + col * cellWidth;
-                    int tileY = verticalOffset + row * cellWidth;
-                    graphics.drawImage(whiteTileImage, tileX, tileY, null);
-                }
-                else if (gameboard[row][col] == 2) {
-                    System.out.println("drawing black tile at " + row + ", " + col);
-                    // draw a black oval
-                    int tileX = horizontalOffset + col * cellWidth;
-                    int tileY = verticalOffset + row * cellWidth;
-                    graphics.drawImage(blackTileImage, tileX, tileY, null);
-                }
-            }
         }
     }
 }

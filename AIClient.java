@@ -73,7 +73,7 @@ public class AIClient extends GomokuClient {
 
         if (layout.isMyTurn) {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(500);
             } catch(InterruptedException ex) {
                 Thread.currentThread().interrupt();
             }
