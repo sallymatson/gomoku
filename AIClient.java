@@ -57,13 +57,13 @@ public class AIClient extends GomokuClient {
 
     void initializeStrings(){
         // initialize row and col strings
-        for (int i = 15; i <= 232; i+=16){
+        for (int i = 15; i < 240; i += 16){
             rows.setCharAt(i, 'X');
             cols.setCharAt(i, 'X');
         }
         // initialize pos/neg diagonal string
         int counter = 2;
-        for (int i = 1; i<135; i+=counter){
+        for (int i = 1; i < 135; i+=counter){
             posDiag.setCharAt(i, 'X');
             negDiag.setCharAt(i, 'X');
             counter++;
@@ -82,12 +82,6 @@ public class AIClient extends GomokuClient {
         layout.placeGamePiece(row, col, color);
 
         if (layout.isMyTurn) {
-            // TODO: get rid of sleep
-            try {
-                Thread.sleep(1000);
-            } catch(InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }
             play();
         }
     }
@@ -100,34 +94,119 @@ public class AIClient extends GomokuClient {
     }
 
     private void play() {
-        defend();
-        attack();
-    }
+        Tile targetTile = new Tile(-1, -1);
 
-    private void defend() {
-        // up here, call findFour(!isBlack) i.e. look for opponent
-    }
-
-    private void attack() {
-        System.out.println("ready to attack");
-        Tile targetTile = findTarget(isBlack);
+        // if we can win (find a 4) -> win
+        targetTile = lookFor4(isBlack);
         if (targetTile.isValid()) {
-            System.out.println("yooooo");
             placeGamePiece(targetTile.row, targetTile.col);
+            return;
         }
-        else {
-            System.out.println("didn't find any tiles of my color, so we goin random");
-            // we have not placed any pieces
-            int randomRow = ThreadLocalRandom.current().nextInt(0, 15);
-            int randomCol = ThreadLocalRandom.current().nextInt(0, 15);
-
-            while (gameboard[randomRow][randomCol] != 0) {
-                randomRow = ThreadLocalRandom.current().nextInt(0, 15);
-                randomCol = ThreadLocalRandom.current().nextInt(0, 15);
-            }
-            placeGamePiece(randomRow, randomCol);
+        // if we can block them from winning (find a 4) -> block
+        targetTile = lookFor4(!isBlack);
+        if (targetTile.isValid()) {
+            placeGamePiece(targetTile.row, targetTile.col);
+            return;
         }
+        // if we can place a 4 trap (find a 3) -> place
+        targetTile = lookFor3(isBlack);
+        if (targetTile.isValid()) {
+            placeGamePiece(targetTile.row, targetTile.col);
+            return;
+        }
+        // if we can block a 4 trap (find a 3) -> block
+        targetTile = lookFor3(!isBlack);
+        if (targetTile.isValid()) {
+            placeGamePiece(targetTile.row, targetTile.col);
+            return;
+        }
+        // if we can place a 3 trap (find a 2) -> place
+        targetTile = lookFor2(isBlack);
+        if (targetTile.isValid()) {
+            placeGamePiece(targetTile.row, targetTile.col);
+            return;
+        }
+        // if we can place a 2 trap (find a 1) -> place
+        targetTile = lookFor1(isBlack);
+        if (targetTile.isValid()) {
+            placeGamePiece(targetTile.row, targetTile.col);
+            return;
+        }
+        // if we can place a 1 trap (find an empty 6) -> place
+        targetTile = lookForEmpty6(isBlack);
+        if (targetTile.isValid()) {
+            placeGamePiece(targetTile.row, targetTile.col);
+            return;
+        }
+        // if we can place a regular 1 (find an empty 5) -> place
+        targetTile = lookForEmpty5(isBlack);
+        if (targetTile.isValid()) {
+            placeGamePiece(targetTile.row, targetTile.col);
+            return;
+        }
+        // defend
+        // TODO: TDB
+        // ...
+        // if none of the above cases
+        placeRandom();
     }
+
+    private Tile lookFor4(boolean isBlack) {
+        // TODO: look for any 4 X's in 5 spots
+        //  - diagonals
+        //  - cols
+        //  - rows
+        // TODO: if found, return the empty spot
+        return new Tile(-1, -1);
+    }
+
+    private Tile lookFor3(boolean isBlack) {
+        // TODO: look for _____
+        // TODO: if found, return _____
+        return new Tile(-1, -1);
+    }
+
+    private Tile lookFor2(boolean isBlack) {
+        // TODO: look for _____
+        // TODO: if found, return _____
+        return new Tile(-1, -1);
+    }
+
+    private Tile lookFor1(boolean isBlack) {
+        // TODO: look for _____
+        // TODO: if found, return _____
+        return new Tile(-1, -1);
+    }
+
+    private Tile lookForEmpty6(boolean isBlack) {
+        // TODO: look for _____
+        // TODO: if found, return _____
+        return new Tile(-1, -1);
+    }
+
+    private Tile lookForEmpty5(boolean isBlack) {
+        // TODO: look for _____
+        // TODO: if found, return _____
+        return new Tile(-1, -1);
+    }
+
+    private void placeRandom() {
+        System.out.println("didn't find any tiles of my color, so we goin random");
+        // TODO: loop through all indices and find empty ones -> put them in a list
+        // TODO: pick random index of that list -> place at that index
+
+        // we have not placed any pieces
+        int randomRow = ThreadLocalRandom.current().nextInt(0, 15);
+        int randomCol = ThreadLocalRandom.current().nextInt(0, 15);
+
+        while (gameboard[randomRow][randomCol] != 0) {
+            randomRow = ThreadLocalRandom.current().nextInt(0, 15);
+            randomCol = ThreadLocalRandom.current().nextInt(0, 15);
+        }
+        placeGamePiece(randomRow, randomCol);
+    }
+
+    // ****************************************************************************
 
     private Tile findTarget(boolean isBlack) {
         Row longestRow = findLongestRow(isBlack);
