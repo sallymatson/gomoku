@@ -7,14 +7,20 @@ enum Direction {
     Row, Column, PosDiag, NegDiag
 }
 
+class Converter {
+    static {
+        System.out.println("I LIKE JAVA AGAINNNNNNNNNNN");
+        // TODO: initialize!!!!!!!!!!
+    }
+    public static Hashtable<Integer, Tile> indexToTilePosDiag;
+    public static Hashtable<Tile, Integer> tileToIndexPosDiag;
+    public static Hashtable<Integer, Tile> indexToTileNegDiag;
+    public static Hashtable<Tile, Integer> tileToIndexNegDiag;
+}
+
 class Tile {
     public int row = -1;
     public int col = -1;
-
-    public Hashtable<Integer, Tile> indexToTilePosDiag;
-    public Hashtable<Tile, Integer> tileToIndexPosDiag;
-    public Hashtable<Integer, Tile> indexToTileNegDiag;
-    public Hashtable<Tile, Integer> tileToIndexNegDiag;
 
     public Tile(int row, int col) {
         this.row = row;
@@ -32,12 +38,12 @@ class Tile {
             row = index % 16;
         }
         else if (direction == Direction.PosDiag) {
-            row = indexToTilePosDiag.get(index).row;
-            col = indexToTilePosDiag.get(index).col;
+            row = Converter.indexToTilePosDiag.get(index).row;
+            col = Converter.indexToTilePosDiag.get(index).col;
         }
         else if (direction == Direction.NegDiag) {
-            row = indexToTileNegDiag.get(index).row;
-            col = indexToTileNegDiag.get(index).col;
+            row = Converter.indexToTileNegDiag.get(index).row;
+            col = Converter.indexToTileNegDiag.get(index).col;
         }
     }
 
@@ -50,10 +56,13 @@ class Tile {
             return row + col * 16;
         }
         else if (direction == Direction.PosDiag) {
-            return tileToIndexPosDiag.get(this);
+            return Converter.tileToIndexPosDiag.get(this);
         }
         else if (direction == Direction.NegDiag) {
-            return tileToIndexNegDiag.get(this);
+            return Converter.tileToIndexNegDiag.get(this);
+        }
+        else {
+            return -1;
         }
     }
 
