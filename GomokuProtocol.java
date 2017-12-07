@@ -1,9 +1,6 @@
 package gomoku;
 
 public class GomokuProtocol {
-    
-	
-	
     private static final String SEPARATOR = "\0";
     private static final String MESSAGE_PLAY = SEPARATOR + "/play";
     private static final String MESSAGE_SET_BLACK = SEPARATOR + "/black";

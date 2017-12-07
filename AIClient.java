@@ -2,73 +2,57 @@ package gomoku;
 import sun.util.resources.ar.CurrencyNames_ar_MA;
 
 import java.awt.geom.Point2D;
+import java.lang.reflect.Array;
 import java.util.concurrent.ThreadLocalRandom;
-
-class Tile {
-    public int row = -1;
-    public int col = -1;
-
-    public Tile(int row, int col) {
-        this.row = row;
-        this.col = col;
-    }
-
-    public boolean isValid() {
-        return (row != -1 && col != -1);
-    }
-}
-
-class Row {
-    public Tile startPos;
-    public int length = 0;
-
-    public Row(Tile startPos, int length) {
-        this.startPos = startPos;
-        this.length = length;
-    }
-}
+import java.util.ArrayList;
 
 public class AIClient extends GomokuClient {
 
-    StringBuilder rows = new StringBuilder(233);
-    StringBuilder cols = new StringBuilder(233);
-    StringBuilder posDiag;
-    StringBuilder negDiag;
+    StringBuilder rows = new StringBuilder();
+    StringBuilder cols = new StringBuilder();
+    StringBuilder posDiag = new StringBuilder();
+    StringBuilder negDiag = new StringBuilder();
 
-    int posDiagonalIndex(int row, int col){
-        // TODO
-        int strIndex = 2;
-        return strIndex;
-    }
-
-    int negDiagonalIndex(int row, int col){
-        // TODO
-        int strIndex = 0;
-        return strIndex;
-    }
-
-    int rowIndex(int row, int col){
-        return col + row*16;
-    }
-
-    int colIndex(int row, int col){
-        return row + col*16;
+    public AIClient() {
+        Tile t = Converter.indexToTileNegDiag.get(5);
+        initializeStrings();
     }
 
     void initializeStrings(){
         // initialize row and col strings
-        for (int i = 15; i < 240; i += 16){
-            rows.setCharAt(i, 'X');
-            cols.setCharAt(i, 'X');
+        for (int i = 0; i < 240; i++){
+            if (i % 16 == 15) {
+                rows.append('\n');
+                cols.append('\n');
+            }
+            else {
+                rows.append('0');
+                cols.append('0');
+            }
         }
         // initialize pos/neg diagonal string
-        int counter = 2;
-        for (int i = 1; i < 135; i+=counter){
-            posDiag.setCharAt(i, 'X');
-            negDiag.setCharAt(i, 'X');
-            counter++;
+        int counter = 3;
+        int nextBreak = 1;
+        boolean counterGrowing = true;
+        // each time, counter changes by counter*2 + 1
+        for (int i = 0; i < 254; i++){
+            if (i == nextBreak) {
+                posDiag.append('\n');
+                negDiag.append('\n');
+                nextBreak += counter;
+                if (counter == 16){
+                    counterGrowing = false;
+                }
+                if (counterGrowing) {
+                    counter++;
+                } else {
+                    counter--;
+                }
+            } else {
+                posDiag.append('0');
+                negDiag.append('0');
+            }
         }
-
     }
 
     @Override
@@ -78,10 +62,21 @@ public class AIClient extends GomokuClient {
         int row = detail[1];
         int col = detail[2];
         gameboard[row][col] = color + 1; // probably off by 1
+        Tile placedTile = new Tile(row, col);
+        // update StringBuilders
+        rows.setCharAt(placedTile.getIndex(Direction.Row), Character.forDigit(color + 1, 10));
+        cols.setCharAt(placedTile.getIndex(Direction.Column), Character.forDigit(color + 1, 10));
+        posDiag.setCharAt(placedTile.getIndex(Direction.PosDiag), Character.forDigit(color + 1, 10));
+        negDiag.setCharAt(placedTile.getIndex(Direction.NegDiag), Character.forDigit(color + 1, 10));
         // send message to gameboard that the opponent has played
         layout.placeGamePiece(row, col, color);
 
         if (layout.isMyTurn) {
+            try {
+                Thread.sleep(500);
+            } catch(InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
             play();
         }
     }
@@ -95,98 +90,117 @@ public class AIClient extends GomokuClient {
 
     private void play() {
         Tile targetTile = new Tile(-1, -1);
+        GameStates gameStatesOffense = new GameStates(isBlack);
+        GameStates gameStatesDefense = new GameStates(!isBlack);
 
         // if we can win (find a 4) -> win
-        targetTile = lookFor4(isBlack);
+        // look for 4 in 5 of color isBlack
+        targetTile = checkCases(gameStatesOffense.fourCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can block them from winning (find a 4) -> block
-        targetTile = lookFor4(!isBlack);
+        targetTile = checkCases(gameStatesDefense.fourCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a 4 trap (find a 3) -> place
-        targetTile = lookFor3(isBlack);
+        targetTile = checkCases(gameStatesOffense.threeCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can block a 4 trap (find a 3) -> block
-        targetTile = lookFor3(!isBlack);
+        targetTile = checkCases(gameStatesDefense.threeCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a 3 trap (find a 2) -> place
-        targetTile = lookFor2(isBlack);
+        targetTile = checkCases(gameStatesOffense.twoCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a 2 trap (find a 1) -> place
-        targetTile = lookFor1(isBlack);
+        targetTile = checkCases(gameStatesOffense.oneCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a 1 trap (find an empty 6) -> place
-        targetTile = lookForEmpty6(isBlack);
+        targetTile = lookForEmpty(6);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a regular 1 (find an empty 5) -> place
-        targetTile = lookForEmpty5(isBlack);
+        targetTile = lookForEmpty(5);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
-        // defend
+        // petty defense
         // TODO: TDB
         // ...
         // if none of the above cases
         placeRandom();
     }
 
-    private Tile lookFor4(boolean isBlack) {
-        // TODO: look for any 4 X's in 5 spots
-        //  - diagonals
-        //  - cols
-        //  - rows
-        // TODO: if found, return the empty spot
+    private Tile checkCases(ArrayList<NextMove> cases) {
+        int index = -1;
+        for (NextMove move : cases) {
+            // pos diag
+            index = posDiag.indexOf(move.state.toString());
+            if (index != -1) {
+                return new Tile(index + move.nextMove, Direction.PosDiag);
+            }
+            // neg diag
+            index = negDiag.indexOf(move.state.toString());
+            if (index != -1) {
+                return new Tile(index + move.nextMove, Direction.NegDiag);
+            }
+            // cols
+            index = cols.indexOf(move.state.toString());
+            if (index != -1) {
+                return new Tile(index + move.nextMove, Direction.Column);
+            }
+            // rows
+            index = rows.indexOf(move.state.toString());
+            if (index != -1) {
+                return new Tile(index + move.nextMove, Direction.Row);
+            }
+        }
+        // if not found, return invalid Tile
         return new Tile(-1, -1);
     }
 
-    private Tile lookFor3(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
-        return new Tile(-1, -1);
-    }
-
-    private Tile lookFor2(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
-        return new Tile(-1, -1);
-    }
-
-    private Tile lookFor1(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
-        return new Tile(-1, -1);
-    }
-
-    private Tile lookForEmpty6(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
-        return new Tile(-1, -1);
-    }
-
-    private Tile lookForEmpty5(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
+    private Tile lookForEmpty(int length) {
+        int index = -1;
+        String empty = new String(new char[length]).replace('\0', '0');
+        int randomIndex = ThreadLocalRandom.current().nextInt(0, length);
+        // pos diag
+        index = posDiag.indexOf(empty);
+        if (index != -1) {
+            return new Tile(index + randomIndex, Direction.PosDiag);
+        }
+        // neg diag
+        index = negDiag.indexOf(empty);
+        if (index != -1) {
+            return new Tile(index + randomIndex, Direction.NegDiag);
+        }
+        // cols
+        index = cols.indexOf(empty);
+        if (index != -1) {
+            return new Tile(index + randomIndex, Direction.Column);
+        }
+        // rows
+        index = rows.indexOf(empty);
+        if (index != -1) {
+            return new Tile(index + randomIndex, Direction.Row);
+        }
         return new Tile(-1, -1);
     }
 
