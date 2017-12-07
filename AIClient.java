@@ -3,6 +3,7 @@ import sun.util.resources.ar.CurrencyNames_ar_MA;
 
 import java.awt.geom.Point2D;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.ArrayList;
 
 class Tile {
     public int row = -1;
@@ -26,6 +27,15 @@ class Row {
         this.startPos = startPos;
         this.length = length;
     }
+}
+
+class GameStates {
+    public static ArrayList<StringBuilder> fourCases = new ArrayList<StringBuilder>() {{
+        add(new StringBuilder("!!!!!!!!"));
+    }};
+    public static ArrayList<StringBuilder> threeCases;
+    public static ArrayList<StringBuilder> twoCases;
+    public static ArrayList<StringBuilder> oneCases;
 }
 
 public class AIClient extends GomokuClient {
