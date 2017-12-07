@@ -2,6 +2,7 @@ package gomoku;
 import sun.util.resources.ar.CurrencyNames_ar_MA;
 
 import java.awt.geom.Point2D;
+import java.lang.reflect.Array;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.ArrayList;
 
@@ -60,7 +61,12 @@ public class AIClient extends GomokuClient {
         int row = detail[1];
         int col = detail[2];
         gameboard[row][col] = color + 1; // probably off by 1
-        // TODO: update StringBuilders
+        Tile placedTile = new Tile(row, col);
+        // update StringBuilders
+        rows.setCharAt(placedTile.getIndex(Direction.Row), Character.forDigit(color + 1, 10));
+        cols.setCharAt(placedTile.getIndex(Direction.Column), Character.forDigit(color + 1, 10));
+        posDiag.setCharAt(placedTile.getIndex(Direction.PosDiag), Character.forDigit(color + 1, 10));
+        negDiag.setCharAt(placedTile.getIndex(Direction.NegDiag), Character.forDigit(color + 1, 10));
         // send message to gameboard that the opponent has played
         layout.placeGamePiece(row, col, color);
 
@@ -78,67 +84,68 @@ public class AIClient extends GomokuClient {
 
     private void play() {
         Tile targetTile = new Tile(-1, -1);
+        GameStates gameStatesOffense = new GameStates(isBlack);
+        GameStates gameStatesDefense = new GameStates(!isBlack);
 
         // if we can win (find a 4) -> win
-        targetTile = lookFor4(isBlack);
+        // look for 4 in 5 of color isBlack
+        targetTile = checkCases(gameStatesOffense.fourCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can block them from winning (find a 4) -> block
-        targetTile = lookFor4(!isBlack);
+        targetTile = checkCases(gameStatesDefense.fourCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a 4 trap (find a 3) -> place
-        targetTile = lookFor3(isBlack);
+        targetTile = checkCases(gameStatesOffense.threeCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can block a 4 trap (find a 3) -> block
-        targetTile = lookFor3(!isBlack);
+        targetTile = checkCases(gameStatesDefense.threeCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a 3 trap (find a 2) -> place
-        targetTile = lookFor2(isBlack);
+        targetTile = checkCases(gameStatesOffense.twoCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a 2 trap (find a 1) -> place
-        targetTile = lookFor1(isBlack);
+        targetTile = checkCases(gameStatesOffense.oneCases);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a 1 trap (find an empty 6) -> place
-        targetTile = lookForEmpty6(isBlack);
+        targetTile = lookForEmpty(6);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
         // if we can place a regular 1 (find an empty 5) -> place
-        targetTile = lookForEmpty5(isBlack);
+        targetTile = lookForEmpty(5);
         if (targetTile.isValid()) {
             placeGamePiece(targetTile.row, targetTile.col);
             return;
         }
-        // defend
+        // petty defense
         // TODO: TDB
         // ...
         // if none of the above cases
         placeRandom();
     }
 
-    private Tile lookFor4(boolean isBlack) {
-        // look for 4 in 5 of color isBlack
-        GameStates gameStates = new GameStates(isBlack);
+    private Tile checkCases(ArrayList<NextMove> cases) {
         int index = -1;
-        for (NextMove move : gameStates.fourCases) {
+        for (NextMove move : cases) {
             // pos diag
             index = posDiag.indexOf(move.state.toString());
             if (index != -1) {
@@ -164,33 +171,30 @@ public class AIClient extends GomokuClient {
         return new Tile(-1, -1);
     }
 
-    private Tile lookFor3(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
-        return new Tile(-1, -1);
-    }
-
-    private Tile lookFor2(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
-        return new Tile(-1, -1);
-    }
-
-    private Tile lookFor1(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
-        return new Tile(-1, -1);
-    }
-
-    private Tile lookForEmpty6(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
-        return new Tile(-1, -1);
-    }
-
-    private Tile lookForEmpty5(boolean isBlack) {
-        // TODO: look for _____
-        // TODO: if found, return _____
+    private Tile lookForEmpty(int length) {
+        int index = -1;
+        String empty = new String(new char[length]).replace('\0', '0');
+        int randomIndex = ThreadLocalRandom.current().nextInt(0, length);
+        // pos diag
+        index = posDiag.indexOf(empty);
+        if (index != -1) {
+            return new Tile(index + randomIndex, Direction.PosDiag);
+        }
+        // neg diag
+        index = negDiag.indexOf(empty);
+        if (index != -1) {
+            return new Tile(index + randomIndex, Direction.NegDiag);
+        }
+        // cols
+        index = cols.indexOf(empty);
+        if (index != -1) {
+            return new Tile(index + randomIndex, Direction.Column);
+        }
+        // rows
+        index = rows.indexOf(empty);
+        if (index != -1) {
+            return new Tile(index + randomIndex, Direction.Row);
+        }
         return new Tile(-1, -1);
     }
 
