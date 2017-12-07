@@ -42,31 +42,29 @@ class NextMove {
 class GameStates {
     public static ArrayList<NextMove> fourCases = new ArrayList<NextMove>() {{
         add(new NextMove(new StringBuilder("01111"), 0));
-        add(new NextMove(new StringBuilder("10111"), 1);
-        add(new NextMove(new StringBuilder("11011"), 2);
-        add(new NextMove(new StringBuilder("11101"), 3);
-        add(new NextMove(new StringBuilder("11110"), 4);
+        add(new NextMove(new StringBuilder("10111"), 1));
+        add(new NextMove(new StringBuilder("11011"), 2));
+        add(new NextMove(new StringBuilder("11101"), 3));
+        add(new NextMove(new StringBuilder("11110"), 4));
     }};
     public static ArrayList<NextMove> threeCases = new ArrayList<NextMove>() {{
-        add(new StringBuilder("011000"));
-        add(new StringBuilder("010100"));
-        add(new StringBuilder("010010"));
-        add(new StringBuilder("000110"));
-        add(new StringBuilder("001010"));
+        add(new NextMove(new StringBuilder("011010"), 3));
+        add(new NextMove(new StringBuilder("010110"), 2));
+        add(new NextMove(new StringBuilder("001110"), 1));
+        add(new NextMove(new StringBuilder("011100"), 4));
     }};
     public static ArrayList<NextMove> twoCases = new ArrayList<NextMove>() {{
-        add(new StringBuilder("011000"));
-        add(new StringBuilder("010100"));
-        add(new StringBuilder("010010"));
-        add(new StringBuilder("000110"));
-        add(new StringBuilder("001010"));
+        add(new NextMove(new StringBuilder("011000"), 4));
+        add(new NextMove(new StringBuilder("010100"), 4));
+        add(new NextMove(new StringBuilder("010010"), 3));
+        add(new NextMove(new StringBuilder("000110"), 1));
+        add(new NextMove(new StringBuilder("001010"), 1));
     }};
     public static ArrayList<NextMove> oneCases = new ArrayList<NextMove>() {{
-        add(new StringBuilder("10000"));
-        add(new StringBuilder("01000"));
-        add(new StringBuilder("00100"));
-        add(new StringBuilder("00010"));
-        add(new StringBuilder("00001"));
+        add(new NextMove(new StringBuilder("010000"), 2));
+        add(new NextMove(new StringBuilder("001000"), 1));
+        add(new NextMove(new StringBuilder("000100"), 4));
+        add(new NextMove(new StringBuilder("000010"), 3));
     }};
 }
 
