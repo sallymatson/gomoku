@@ -29,19 +29,43 @@ class Row {
     }
 }
 
+class NextMove {
+    public StringBuilder state;
+    public int nextMove;
+
+    public NextMove(StringBuilder state, int nextMove) {
+        this.state = state;
+        this.nextMove = nextMove;
+    }
+}
+
 class GameStates {
-    public static ArrayList<StringBuilder> fourCases = new ArrayList<StringBuilder>() {{
+    public static ArrayList<NextMove> fourCases = new ArrayList<NextMove>() {{
+        add(new NextMove(new StringBuilder("01111"), 0));
+        add(new NextMove(new StringBuilder("10111"), 1);
+        add(new NextMove(new StringBuilder("11011"), 2);
+        add(new NextMove(new StringBuilder("11101"), 3);
+        add(new NextMove(new StringBuilder("11110"), 4);
+    }};
+    public static ArrayList<StringBuilder> threeCases = new ArrayList<StringBuilder>() {{
         add(new StringBuilder("!!!!!!!!"));
     }};
-    public static ArrayList<StringBuilder> threeCases;
-    public static ArrayList<StringBuilder> twoCases;
-    public static ArrayList<StringBuilder> oneCases;
+    public static Map<StringBuilder, StringBuilder> twoCases = new ArrayList<StringBuilder>() {{
+        add(new StringBuilder("011000"));
+        add(new StringBuilder("010100"));
+        add(new StringBuilder("010010"));
+        add(new StringBuilder("000110"));
+        add(new StringBuilder("001010"));
+    }};
+    public static ArrayList<StringBuilder> oneCases = new ArrayList<StringBuilder>() {{
+        add(new StringBuilder("!!!!!!!!"));
+    }};
 }
 
 public class AIClient extends GomokuClient {
 
-    StringBuilder rows = new StringBuilder(233);
-    StringBuilder cols = new StringBuilder(233);
+    StringBuilder rows = new StringBuilder(240);
+    StringBuilder cols = new StringBuilder(240);
     StringBuilder posDiag;
     StringBuilder negDiag;
 
