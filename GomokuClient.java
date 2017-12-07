@@ -36,7 +36,6 @@ public class GomokuClient implements Runnable {
     protected static BufferedReader inputStream = null;
     private static boolean closed = false;
     protected static GuiLayout layout;
-    private static boolean hasName = false;
     protected String name = "";
     protected String opponent_name = "";
     protected boolean isBlack;
@@ -132,7 +131,7 @@ public class GomokuClient implements Runnable {
         int color = detail[0];
         int row = detail[1];
         int col = detail[2];
-        gameboard[row][col] = color; // probably off by 1
+        gameboard[row][col] = color + 1; // probably off by 1
         // send message to gameboard that the opponent has played
         layout.placeGamePiece(row, col, color);
     }
