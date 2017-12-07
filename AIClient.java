@@ -13,6 +13,7 @@ public class AIClient extends GomokuClient {
     StringBuilder negDiag = new StringBuilder();
 
     public AIClient() {
+        Tile t = Converter.indexToTileNegDiag.get(5);
         initializeStrings();
     }
 

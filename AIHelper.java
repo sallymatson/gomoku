@@ -8,14 +8,69 @@ enum Direction {
 }
 
 class Converter {
-    static {
-        System.out.println("I LIKE JAVA AGAINNNNNNNNNNN");
-        // TODO: initialize!!!!!!!!!!
-    }
+
     public static Hashtable<Integer, Tile> indexToTilePosDiag;
     public static Hashtable<Tile, Integer> tileToIndexPosDiag;
     public static Hashtable<Integer, Tile> indexToTileNegDiag;
     public static Hashtable<Tile, Integer> tileToIndexNegDiag;
+
+    static {
+        System.out.println("I LIKE JAVA AGAINNNNNNNNNNN");
+        indexToTilePosDiag = new Hashtable<Integer, Tile>();
+        indexToTileNegDiag = new Hashtable<Integer, Tile>();
+        tileToIndexNegDiag = new Hashtable<Tile, Integer>();
+        tileToIndexPosDiag = new Hashtable<Tile, Integer>();
+        int rowNeg = 14, colNeg = 0, rowStartNeg = 13, colStartNeg = 1;
+        int rowPos = 0, colPos = 0, rowStartPos = 1, colStartPos = 1;
+        Integer i = 0;
+        while (rowStartNeg >= 0){
+            indexToTileNegDiag.put(i, new Tile(rowNeg, colNeg));
+            tileToIndexNegDiag.put(new Tile(rowNeg, colNeg), i);
+            indexToTilePosDiag.put(i, new Tile(rowPos, colPos));
+            tileToIndexPosDiag.put(new Tile(rowPos, colPos), i);
+            System.out.println("Index: " + i + " Row: " + rowPos + " Col: " + colPos);
+            if (rowNeg == 14){
+                i++;
+                System.out.println("*************************");
+                rowNeg = rowStartNeg;
+                rowStartNeg--;
+                colNeg = 0;
+                rowPos = rowStartPos;
+                rowStartPos++;
+                colPos = 0;
+            } else {
+                rowNeg++;
+                colNeg++;
+                rowPos--;
+                colPos++;
+            }
+            i++;
+        }
+        System.out.println("SKUFHSDJHFSDHKFSDJHF");
+        while (colStartNeg <= 15){
+            indexToTileNegDiag.put(i, new Tile(rowNeg, colNeg));
+            tileToIndexNegDiag.put(new Tile(rowNeg, colNeg), i);
+            indexToTilePosDiag.put(i, new Tile(rowPos, colPos));
+            tileToIndexPosDiag.put(new Tile(rowPos, colPos), i);
+            System.out.println("Index: " + i + " Row: " + rowPos + " Col: " + colPos);
+            if (colNeg == 14){
+                i++;
+                System.out.println("*************************");
+                rowNeg = 0;
+                colNeg = colStartNeg;
+                colStartNeg++;
+                rowPos = 14;
+                colPos = colStartPos;
+                colStartPos++;
+            } else {
+                rowNeg++;
+                colNeg++;
+                rowPos--;
+                colPos++;
+            }
+            i++;
+        }
+    }
 }
 
 class Tile {
