@@ -2,6 +2,48 @@ package gomoku;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class AIClient extends GomokuClient {
+
+    StringBuilder rows = new StringBuilder(233);
+    StringBuilder cols = new StringBuilder(233);
+    StringBuilder posDiag;
+    StringBuilder negDiag;
+
+    int posDiagonalIndex(int row, int col){
+        // TODO
+        int strIndex = 2;
+        return strIndex;
+    }
+
+    int negDiagonalIndex(int row, int col){
+        // TODO
+        int strIndex = 0;
+        return strIndex;
+    }
+
+    int rowIndex(int row, int col){
+        return col + row*16;
+    }
+
+    int colIndex(int row, int col){
+        return row + col*16;
+    }
+
+    void initializeStrings(){
+        // initialize row and col strings
+        for (int i = 15; i <= 232; i+=16){
+            rows.setCharAt(i, 'X');
+            cols.setCharAt(i, 'X');
+        }
+        // initialize pos/neg diagonal string
+        int counter = 2;
+        for (int i = 1; i<135; i+=counter){
+            posDiag.setCharAt(i, 'X');
+            negDiag.setCharAt(i, 'X');
+            counter++;
+        }
+
+    }
+
     @Override
     protected void handlePlayMessage(String responseLine) {
         int[] detail = GomokuProtocol.getPlayDetail(responseLine);

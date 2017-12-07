@@ -36,7 +36,6 @@ public class GomokuClient implements Runnable {
     protected static BufferedReader inputStream = null;
     private static boolean closed = false;
     protected static GuiLayout layout;
-    private static boolean hasName = false;
     protected String name = "";
     protected String opponent_name = "";
     protected boolean isBlack;
