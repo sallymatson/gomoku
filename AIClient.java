@@ -47,18 +47,26 @@ class GameStates {
         add(new NextMove(new StringBuilder("11101"), 3);
         add(new NextMove(new StringBuilder("11110"), 4);
     }};
-    public static ArrayList<StringBuilder> threeCases = new ArrayList<StringBuilder>() {{
-        add(new StringBuilder("!!!!!!!!"));
-    }};
-    public static Map<StringBuilder, StringBuilder> twoCases = new ArrayList<StringBuilder>() {{
+    public static ArrayList<NextMove> threeCases = new ArrayList<NextMove>() {{
         add(new StringBuilder("011000"));
         add(new StringBuilder("010100"));
         add(new StringBuilder("010010"));
         add(new StringBuilder("000110"));
         add(new StringBuilder("001010"));
     }};
-    public static ArrayList<StringBuilder> oneCases = new ArrayList<StringBuilder>() {{
-        add(new StringBuilder("!!!!!!!!"));
+    public static ArrayList<NextMove> twoCases = new ArrayList<NextMove>() {{
+        add(new StringBuilder("011000"));
+        add(new StringBuilder("010100"));
+        add(new StringBuilder("010010"));
+        add(new StringBuilder("000110"));
+        add(new StringBuilder("001010"));
+    }};
+    public static ArrayList<NextMove> oneCases = new ArrayList<NextMove>() {{
+        add(new StringBuilder("10000"));
+        add(new StringBuilder("01000"));
+        add(new StringBuilder("00100"));
+        add(new StringBuilder("00010"));
+        add(new StringBuilder("00001"));
     }};
 }
 
