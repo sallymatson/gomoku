@@ -316,7 +316,6 @@ class clientThread extends Thread {
                             boolean isDraw = myGame.checkDrawState();
                             if(isDraw) {
                                 // send draw message to both
-                                System.out.println("Are you fucking kidding me.");
                                 outputStream.println(GomokuProtocol.generateChatMessage("Server", "Tie game!"));
                                 opponent.outputStream.println(GomokuProtocol.generateChatMessage("Server", "Tie game!"));
                                 outputStream.println(GomokuProtocol.generateLoseMessage());
@@ -344,6 +343,7 @@ class clientThread extends Thread {
                     System.out.println("reset message!");
                     myGame.resetGameBoard();
                     myGame.printGameBoard();
+                    myGame.moveCount = 0;
                     outputStream.println(GomokuProtocol.generateResetMessage());
                     opponent.outputStream.println(GomokuProtocol.generateResetMessage());
                 }
