@@ -33,9 +33,21 @@ class GameStates {
     public static ArrayList<StringBuilder> fourCases = new ArrayList<StringBuilder>() {{
         add(new StringBuilder("!!!!!!!!"));
     }};
-    public static ArrayList<StringBuilder> threeCases;
+    public static ArrayList<StringBuilder> threeCases = new ArrayList<StringBuilder>() {{
+        add(new StringBuilder("011000"));
+        add(new StringBuilder("010100"));
+        add(new StringBuilder("010010"));
+        add(new StringBuilder("000110"));
+        add(new StringBuilder("001010"));
+    }};
     public static ArrayList<StringBuilder> twoCases;
-    public static ArrayList<StringBuilder> oneCases;
+    public static ArrayList<StringBuilder> oneCases = new ArrayList<StringBuilder>() {{
+        add(new StringBuilder("10000"));
+        add(new StringBuilder("01000"));
+        add(new StringBuilder("00100"));
+        add(new StringBuilder("00010"));
+        add(new StringBuilder("00001"));
+    }};
 }
 
 public class AIClient extends GomokuClient {
