@@ -5,110 +5,52 @@ import java.awt.geom.Point2D;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.ArrayList;
 
-class Tile {
-    public int row = -1;
-    public int col = -1;
-
-    public Tile(int row, int col) {
-        this.row = row;
-        this.col = col;
-    }
-
-    public boolean isValid() {
-        return (row != -1 && col != -1);
-    }
-}
-
-class Row {
-    public Tile startPos;
-    public int length = 0;
-
-    public Row(Tile startPos, int length) {
-        this.startPos = startPos;
-        this.length = length;
-    }
-}
-
-class NextMove {
-    public StringBuilder state;
-    public int nextMove;
-
-    public NextMove(StringBuilder state, int nextMove) {
-        this.state = state;
-        this.nextMove = nextMove;
-    }
-}
-
-class GameStates {
-    public static ArrayList<NextMove> fourCases = new ArrayList<NextMove>() {{
-        add(new NextMove(new StringBuilder("01111"), 0));
-        add(new NextMove(new StringBuilder("10111"), 1));
-        add(new NextMove(new StringBuilder("11011"), 2));
-        add(new NextMove(new StringBuilder("11101"), 3));
-        add(new NextMove(new StringBuilder("11110"), 4));
-    }};
-    public static ArrayList<NextMove> threeCases = new ArrayList<NextMove>() {{
-        add(new NextMove(new StringBuilder("011010"), 3));
-        add(new NextMove(new StringBuilder("010110"), 2));
-        add(new NextMove(new StringBuilder("001110"), 1));
-        add(new NextMove(new StringBuilder("011100"), 4));
-    }};
-    public static ArrayList<NextMove> twoCases = new ArrayList<NextMove>() {{
-        add(new NextMove(new StringBuilder("011000"), 4));
-        add(new NextMove(new StringBuilder("010100"), 4));
-        add(new NextMove(new StringBuilder("010010"), 3));
-        add(new NextMove(new StringBuilder("000110"), 1));
-        add(new NextMove(new StringBuilder("001010"), 1));
-    }};
-    public static ArrayList<NextMove> oneCases = new ArrayList<NextMove>() {{
-        add(new NextMove(new StringBuilder("010000"), 2));
-        add(new NextMove(new StringBuilder("001000"), 1));
-        add(new NextMove(new StringBuilder("000100"), 4));
-        add(new NextMove(new StringBuilder("000010"), 3));
-    }};
-}
-
 public class AIClient extends GomokuClient {
 
-    StringBuilder rows = new StringBuilder(240);
-    StringBuilder cols = new StringBuilder(240);
-    StringBuilder posDiag;
-    StringBuilder negDiag;
+    StringBuilder rows = new StringBuilder();
+    StringBuilder cols = new StringBuilder();
+    StringBuilder posDiag = new StringBuilder();
+    StringBuilder negDiag = new StringBuilder();
 
-    int posDiagonalIndex(int row, int col){
-        // TODO
-        int strIndex = 2;
-        return strIndex;
-    }
-
-    int negDiagonalIndex(int row, int col){
-        // TODO
-        int strIndex = 0;
-        return strIndex;
-    }
-
-    int rowIndex(int row, int col){
-        return col + row*16;
-    }
-
-    int colIndex(int row, int col){
-        return row + col*16;
+    public AIClient() {
+        initializeStrings();
     }
 
     void initializeStrings(){
         // initialize row and col strings
-        for (int i = 15; i < 240; i += 16){
-            rows.setCharAt(i, 'X');
-            cols.setCharAt(i, 'X');
+        for (int i = 0; i < 240; i++){
+            if (i % 16 == 15) {
+                rows.append('\n');
+                cols.append('\n');
+            }
+            else {
+                rows.append('0');
+                cols.append('0');
+            }
         }
         // initialize pos/neg diagonal string
-        int counter = 2;
-        for (int i = 1; i < 135; i+=counter){
-            posDiag.setCharAt(i, 'X');
-            negDiag.setCharAt(i, 'X');
-            counter++;
+        int counter = 3;
+        int nextBreak = 1;
+        boolean counterGrowing = true;
+        // each time, counter changes by counter*2 + 1
+        for (int i = 0; i < 254; i++){
+            if (i == nextBreak) {
+                posDiag.append('\n');
+                negDiag.append('\n');
+                nextBreak += counter;
+                if (counter == 16){
+                    counterGrowing = false;
+                }
+                if (counterGrowing) {
+                    counter++;
+                } else {
+                    counter--;
+                }
+            } else {
+                posDiag.append('0');
+                negDiag.append('0');
+            }
         }
-
     }
 
     @Override
@@ -118,6 +60,7 @@ public class AIClient extends GomokuClient {
         int row = detail[1];
         int col = detail[2];
         gameboard[row][col] = color + 1; // probably off by 1
+        // TODO: update StringBuilders
         // send message to gameboard that the opponent has played
         layout.placeGamePiece(row, col, color);
 
@@ -192,11 +135,32 @@ public class AIClient extends GomokuClient {
     }
 
     private Tile lookFor4(boolean isBlack) {
-        // TODO: look for any 4 X's in 5 spots
-        //  - diagonals
-        //  - cols
-        //  - rows
-        // TODO: if found, return the empty spot
+        // look for 4 in 5 of color isBlack
+        GameStates gameStates = new GameStates(isBlack);
+        int index = -1;
+        for (NextMove move : gameStates.fourCases) {
+            // pos diag
+            index = posDiag.indexOf(move.state.toString());
+            if (index != -1) {
+                return new Tile(index + move.nextMove, Direction.PosDiag);
+            }
+            // neg diag
+            index = negDiag.indexOf(move.state.toString());
+            if (index != -1) {
+                return new Tile(index + move.nextMove, Direction.NegDiag);
+            }
+            // cols
+            index = cols.indexOf(move.state.toString());
+            if (index != -1) {
+                return new Tile(index + move.nextMove, Direction.Column);
+            }
+            // rows
+            index = rows.indexOf(move.state.toString());
+            if (index != -1) {
+                return new Tile(index + move.nextMove, Direction.Row);
+            }
+        }
+        // if not found, return invalid Tile
         return new Tile(-1, -1);
     }
 
