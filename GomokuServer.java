@@ -20,6 +20,7 @@ public class GomokuServer {
 
     private static ServerSocket serverSocket = null;
     // maximum number of connected users
+    
     private static final int maxConnections = 20;
     private static final clientThread[] clientConns = new clientThread[maxConnections];
     private static final gomokuGame[] currentGames = new gomokuGame[maxConnections/2];
@@ -28,12 +29,12 @@ public class GomokuServer {
     public static void main(String args[]) {
 
         if (args.length < 1) {
-			System.out.println("Please pass port number as command line argument");
-			System.exit(0);
-		}
-		
-		int portNumber = Integer.parseInt(args[0]);
-		
+            System.out.println("Please pass port number as command line argument");
+            System.exit(0);
+        }
+        
+        int portNumber = Integer.parseInt(args[0]);
+        
         // open socket on server
         //int portNumber = 5155;
         try {
@@ -87,6 +88,7 @@ class gomokuGame {
     public clientThread p1;
     public clientThread p2;
     public int gameboard[][] = new int[15][15];
+    public int moveCount;
 
     gomokuGame(clientThread p1arg, clientThread p2arg){
 
@@ -120,7 +122,10 @@ class gomokuGame {
         // set them to be eachothers opponents
         p1.opponent = p2;
         p2.opponent = p1;
-
+        
+        //initialize movecount to zero
+        this.moveCount = 0;
+        
         p1.outputStream.println(GomokuProtocol.generateChatMessage("Server", "Welcome, Player 1!"));
         p2.outputStream.println(GomokuProtocol.generateChatMessage("Sender", "Welcome, Player 2!"));
         // randomly assign one black and one white
@@ -151,6 +156,26 @@ class gomokuGame {
                 gameboard[i][j] = 0;
             }
         }
+    }
+    
+    public boolean checkDrawState(){            
+            
+            if(moveCount >= 225)
+                return false;
+            else
+                return true;
+        
+//          less optimal, search gameboard each time for empty spaces           
+//          for(int i = 0; i < 15; i++) {
+//              for(int j = 0; j < 15; j++) {
+//                  
+//                  if(gameboard[i][j] == 0){
+//                      return false;
+//                  }
+//              }
+//          }
+//          
+//      return true;
     }
 
     public int checkWinState(int row, int col, int colorNum){
@@ -227,6 +252,7 @@ class clientThread extends Thread {
     public gomokuGame myGame;
     public clientThread opponent;
     public boolean gameStarted = false;
+    
 
     public clientThread(Socket clientSocket, clientThread[] clientConns) {
         this.clientSocket = clientSocket;
@@ -281,7 +307,10 @@ class clientThread extends Thread {
                     int detail[] = GomokuProtocol.getPlayDetail(line);
                     // black = 2, white = 1, empty = 0
                     myGame.gameboard[detail[1]][detail[2]] = colorNum;
-                  
+                    
+                    if(colorNum == 1 || colorNum == 2)
+                            myGame.moveCount++;
+                   
                     int winState = myGame.checkWinState(detail[1], detail[2], colorNum);
 
                     // send play to both players
@@ -293,12 +322,26 @@ class clientThread extends Thread {
                         opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
                         break;
                     }
+                    
+                    else if(winState == 0) {
+                            boolean isDraw = myGame.checkDrawState();
+                            if(isDraw) {
+                                //send lose message to both players, end game.
+                                 outputStream.println(GomokuProtocol.generateLoseMessage());
+                              opponent.outputStream.print(GomokuProtocol.generateLoseMessage());
+                              break;
+                            }
+                    }
+                    
                     else if (winState != 0) { // will this ever happen............
                         // the player who JUST played (and thus sent the gameplay message) has LOST
                         outputStream.println(GomokuProtocol.generateLoseMessage());
                         opponent.outputStream.println(GomokuProtocol.generateWinMessage());
                         break;
                     }
+                    
+                    
+                    
                 }
                 else if (GomokuProtocol.isLoseMessage(line)){
                     System.out.println("Lose message from client.");
