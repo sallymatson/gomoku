@@ -2,6 +2,7 @@ package gomoku;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Objects;
 
 enum Direction {
     Row, Column, PosDiag, NegDiag
@@ -111,6 +112,7 @@ class Tile {
             return row + col * 16;
         }
         else if (direction == Direction.PosDiag) {
+            Hashtable<Tile, Integer> sdf = Converter.tileToIndexPosDiag;
             return Converter.tileToIndexPosDiag.get(this);
         }
         else if (direction == Direction.NegDiag) {
@@ -132,6 +134,11 @@ class Tile {
         }
         Tile t = (Tile)obj;
         return (t.row == row && t.col == col);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.row, this.col);
     }
 }
 
@@ -191,16 +198,16 @@ class GameStates {
 
         if (isBlack) {
             for (NextMove move : fourCases) {
-                move.state.replace('1', '2', move.state.toString());
+                move.state = new StringBuilder(move.state.toString().replace('1', '2'));
             }
             for (NextMove move : threeCases) {
-                move.state.replace('1', '2', move.state.toString());
+                move.state = new StringBuilder(move.state.toString().replace('1', '2'));
             }
             for (NextMove move : twoCases) {
-                move.state.replace('1', '2', move.state.toString());
+                move.state = new StringBuilder(move.state.toString().replace('1', '2'));
             }
             for (NextMove move : oneCases) {
-                move.state.replace('1', '2', move.state.toString());
+                move.state = new StringBuilder(move.state.toString().replace('1', '2'));
             }
         }
     }

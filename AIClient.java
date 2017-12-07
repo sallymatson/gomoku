@@ -72,6 +72,11 @@ public class AIClient extends GomokuClient {
         layout.placeGamePiece(row, col, color);
 
         if (layout.isMyTurn) {
+            try {
+                Thread.sleep(2000);
+            } catch(InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
             play();
         }
     }
