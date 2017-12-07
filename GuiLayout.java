@@ -5,6 +5,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.*;
 import java.nio.charset.*;
@@ -28,6 +29,7 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     // panelGomoku components
     private Image whiteTileImage, blackTileImage;
+    private BufferedImage bufferImage;
 
     // panelChat components
     private TextArea chatArea;
@@ -77,6 +79,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
         setSize(new Dimension(800, 600));
         setVisible(true);
         setResizable(false);
+
+        bufferImage = new BufferedImage(800, 600, BufferedImage.TYPE_INT_RGB);
 
         this.client = client;
         this.isAI = isAI;
@@ -284,8 +288,10 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
 
     @Override
     public void paint(Graphics graphics) {
-        super.paint(graphics); // call to JFrame paint()
-        drawTiles(graphics);
+        Graphics graphicsBuffer = bufferImage.createGraphics();
+        super.paint(graphicsBuffer); // call to JFrame paint()
+        drawTiles(graphicsBuffer);
+        graphics.drawImage(bufferImage, 0, 0, null);
     }
 
     private void drawTiles(Graphics graphics) {
