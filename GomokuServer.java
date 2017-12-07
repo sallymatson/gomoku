@@ -20,6 +20,7 @@ public class GomokuServer {
 
     private static ServerSocket serverSocket = null;
     // maximum number of connected users
+    
     private static final int maxConnections = 20;
     private static final clientThread[] clientConns = new clientThread[maxConnections];
     private static final gomokuGame[] currentGames = new gomokuGame[maxConnections/2];
