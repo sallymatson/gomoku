@@ -14,8 +14,15 @@ public class AIClient extends GomokuClient {
     StringBuilder negDiag = new StringBuilder();
 
     public AIClient() {
-        Tile t = Converter.indexToTileNegDiag.get(5);
         initializeStrings();
+
+    }
+
+    @Override
+    public void setupConnection(String host, int portNumber, boolean isAI) {
+        super.setupConnection(host, portNumber, isAI);
+        layout.buttonGiveUp.setEnabled(false);
+        layout.buttonReset.setEnabled(false);
     }
 
     void initializeStrings(){
@@ -79,6 +86,12 @@ public class AIClient extends GomokuClient {
             }
             play();
         }
+    }
+
+    @Override
+    public void resetGameBoard() {
+        super.resetGameBoard();
+        initializeStrings();
     }
 
     @Override
@@ -218,100 +231,5 @@ public class AIClient extends GomokuClient {
             randomCol = ThreadLocalRandom.current().nextInt(0, 15);
         }
         placeGamePiece(randomRow, randomCol);
-    }
-
-    // ****************************************************************************
-
-    private Tile findTarget(boolean isBlack) {
-        Row longestRow = findLongestRow(isBlack);
-        if (longestRow.length == 0) {
-            return new Tile(-1, -1);
-        }
-        // at this point, we're guaranteed to have a spot to put it
-        if (gameboard[longestRow.startPos.row][longestRow.startPos.col - 1] == 0) {
-            return new Tile(longestRow.startPos.row, longestRow.startPos.col - 1);
-        }
-        else if (gameboard[longestRow.startPos.row][longestRow.startPos.col + longestRow.length] == 0) {
-            return new Tile(longestRow.startPos.row, longestRow.startPos.col + longestRow.length);
-        }
-        else {
-            System.out.println("Something got fucked up somehow...");
-            return new Tile(-1, -1);
-        }
-        // findLongestColumn
-        // (find longest sub-column of color isBlack)
-        // findLongestDiagonal
-        // (find longest sub-diagonal of color isBlack)
-    }
-
-    private Row findLongestRow(boolean isBlack) {
-        // TODO: set this as a const in the class?
-        final int maxPossible = 4; // use this to break out early if you find a 4
-        int myColor = (isBlack ? 2 : 1);
-        // find longest sub-row of color isBlack
-        int longestRow = 0;
-        Tile longestRowStartPos = new Tile(-1, -1);
-        for (int row = 0; row < 15; row++) { // TODO: boardWidth
-            int rowMax = 0;
-            int rowMaxStartCol = -1;
-            int currMax = 0;
-            int currStartCol = -1;
-            int col;
-            for (col = 0; col < 15; col++) {
-                if (gameboard[row][col] == myColor) {
-                    if (currMax == 0) {
-                        currStartCol = col;
-                    }
-                    currMax++;
-                    if (currMax > rowMax) {
-                        // TODO: somehow account for whether the row has empty space on either side
-                        // while still finding max row in THIS row
-                        // (problem is that e.g. we have a 3-row with space but a 4-row with no space,
-                        // we'll skip the 3 row for the 4 row but only find out it doesn't have space
-                        // outside the loop at the bottom
-                        rowMax = currMax;
-                        rowMaxStartCol = currStartCol;
-                        if (currMax == maxPossible) {
-                            // don't need to keep looking, we found a 4
-                            break;
-                        }
-                    }
-                } else {
-                    currStartCol = -1;
-                    currMax = 0;
-                }
-            }
-            if (rowMax > longestRow) {
-                if (rowMax > 0) {
-                    // if up against left side of board, check if you can add to the right end of the row
-                    if (rowMaxStartCol == 0) {
-                        if (gameboard[row][rowMaxStartCol + rowMax] != 0)
-                            continue;
-                    }
-                    // if up against right side of board, check if you can add to the left end of the row
-                    else if (rowMaxStartCol + rowMax > 14) {
-                        if (gameboard[row][rowMaxStartCol - 1] != 0)
-                            continue;
-                    }
-                    // if in the middle, check both
-                    else {
-                        if (gameboard[row][rowMaxStartCol - 1] != 0 &&
-                            gameboard[row][rowMaxStartCol + rowMax] != 0) {
-                            continue;
-                        }
-                    }
-
-                    // the row has space to be lengthened on at least one side
-                    longestRow = rowMax;
-                    longestRowStartPos = new Tile(row, rowMaxStartCol);
-                    if (rowMax == maxPossible) {
-                        // don't need to keep looking, we found a 4
-                        break;
-                    }
-                }
-            }
-        }
-
-        return new Row(longestRowStartPos, longestRow);
     }
 }

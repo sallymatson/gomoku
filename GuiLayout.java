@@ -78,8 +78,8 @@ class GuiLayout extends JFrame implements KeyListener, ActionListener, MouseList
     private JPanel panelChat;
 
     // panelControl components
-    private JButton buttonGiveUp;
-    private JButton buttonReset;
+    public JButton buttonGiveUp;
+    public JButton buttonReset;
 
     // panelGomoku constants
     private final int boardWidth = 15;
